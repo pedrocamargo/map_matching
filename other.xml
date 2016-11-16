@@ -1,6 +1,0 @@
-<application>
-  <component name="PyCodeInsightSettings">
-    <option name="RENAME_SEARCH_IN_COMMENTS_FOR_FUNCTION" value="true" />
-    <option name="RENAME_SEARCH_NON_CODE_FOR_FUNCTION" value="true" />
-  </component>
-</application>
