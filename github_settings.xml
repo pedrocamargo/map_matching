@@ -1,6 +1,0 @@
-<application>
-  <component name="GithubSettings">
-    <option name="AUTH_TYPE" value="TOKEN" />
-    <option name="VALID_GIT_AUTH" value="false" />
-  </component>
-</application>
