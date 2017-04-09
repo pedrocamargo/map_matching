@@ -1,19 +1,19 @@
 __author__  =  'pcamargo'
 
-
-import sys, os
+import glob
 import ntpath
+import sys
+from datetime import timedelta
+from time import clock
+
 import numpy as np
 import pandas as pd
-import glob
-from time import clock
-from datetime import timedelta
-from rtree import index  # Wheel from Chris Gohlke's  website
 import shapefile
+from rtree import index  # Wheel from Chris Gohlke's  website
 
 sys.path.append("C:/Users/pedro.camargo.VEITCHLISTER/.qgis2/python/plugins/AequilibraE/")
-from aequilibrae.paths import Graph, PathResults, path_computation
-from parameters import load_parameter
+from map_matching.aequilibrae import Graph, PathResults, path_computation
+from map_matching.parameters import load_parameter
 from geopy.distance import vincenty as gc
 
 def main():
@@ -128,7 +128,7 @@ def main():
                 # for j in closest_nodes:
                 #     if j < all_nodes.shape[0]:
                 #         if all_nodes[j]>0:
-                #             stop_sequence.append((j,t,dur)) # The time stamp and duration will be needed to setup
+                #             stop_sequence.append((j,trips,dur)) # The time stamp and duration will be needed to setup
                 #                                             # the time stamps for all the nodes along the path
                 #             break
 
