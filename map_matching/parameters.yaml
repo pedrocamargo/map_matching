@@ -1,0 +1,48 @@
+output_folder: "example_data/outputs"
+
+# Parameters to guide the computational performance
+processing:
+  cores: 1
+
+
+geoprocessing parameters:
+  buffer size: 0.0046 #Buffer around the links to capture links likely used. Unit is degrees
+                      # Each 0.0001 correspond to approximately 11m (36ft) in the radius of the buffer
+  azimuth tolerance: 22.5  # In case the network and the GPS data have azimuths, this is the tolerance to be used to
+                           # to define if a GPS ping could have used a certain link
+
+network file fields:
+  link_id: id
+  direction: dir
+  cost: length
+  interpolation: length
+
+  # Optional fields. Fill with 0 if not applicable
+  azimuth: 0
+  speed_AB: 0
+  speed_BA: 0
+
+nodes file fields:
+  node_id: node_id
+
+data quality:
+  max_speed: 130    # in kmph
+  max_speed_time: 120      # in seconds   --> time that the truck needs to be above the speed limit to be scraped
+  minimum_pings: 20 # Minimum number of pings that the vehicle needs to have to be considered valid
+  minimum_coverage: 2 # Minimum diagonal of the Bounding box (km) defined by the GPS pings to be considered a valid vehicle
+
+stops parameters:
+# Time in seconds
+# Distance in km. Measured as Great circle distance between each consecutive ping
+  Maximum space:
+    time: 1200
+    min distance: 5
+    max distance: 20
+
+#This is the algorithm commonly used for ATRI truck GPS data. Initially developed by Pinjari et. Al and improved by
+# Camargo, Hong and Livshits (2017)
+  Delivery stop:
+    stopped speed: 8  # in km/h
+    min time stopped: 300 # 5*60 in seconds   --> minimum stopped time to be considered
+    max time stopped: 14400 # 4*60*60 in seconds   --> maximum stopped time to be considered
+    max stop coverage: 0.8 # in kilometers

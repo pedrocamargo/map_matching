@@ -1,0 +1,48 @@
+import pandas as pd
+from map_matching import *
+from time import clock
+
+out_folder = load_parameters('output_folder')
+
+trips = Trip()
+
+# data quality parameters
+p = load_parameters('data quality')
+trips.set_data_quality_parameters(p)
+
+trips.set_stop_algorithm('Maximum space')
+p = load_parameters('stops parameters')[trips.stops_algorithm]
+trips.set_stops_parameters(p)
+
+# Loading the GPS DATA
+df = pd.read_csv('example_data/example_data_generic_gps_data.csv')
+df['datetime']= df.Date.astype(str) + ' ' + df.time.astype(str)
+df.datetime = pd.to_datetime(df.datetime)
+
+# Data source specific
+field_dict = {"latitude": "LATITUDE",
+              "longitude": "LONGITUDE",
+              "timestamp": "datetime"}
+
+trips.populate_with_dataframe(df, field_dict)
+
+
+# Loading the NETWORK
+net = Network(out_folder)
+par = load_parameters('geoprocessing parameters')
+net.set_geometry_parameters(par)
+
+p = load_parameters('network file fields')
+net.load_network('example_data/FAF_network.shp', p)
+
+print
+t = clock()
+find_stops(trips)
+print 'Finding stops:', clock()-t
+
+t = clock()
+find_network_links(trips, net)
+print 'Finding links:', clock()-t
+
+print trips.graph_links
+print trips.used_links
