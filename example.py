@@ -1,5 +1,5 @@
 import os, sys
-os.chdir('/home/pedro/SourceCode/map_matching')
+#os.chdir('/home/pedro/SourceCode/map_matching')
 import pandas as pd
 from map_matching import *
 
@@ -32,12 +32,12 @@ net = Network(out_folder)
 par = load_parameters('geoprocessing parameters')
 net.set_geometry_parameters(par)
 
-net.load_nodes('example_data/FAF_Nodes.shp', 'ID')
-
 p = load_parameters('network file fields')
 net.load_network('example_data/FAF_Network.shp', p)
 
+net.load_nodes('example_data/FAF_Nodes.shp', 'ID')
 
 map_match(trips, net)
 
+print trips.path.to_csv(os.path.join(out_folder, 'result.csv'), index=False )
 print 1

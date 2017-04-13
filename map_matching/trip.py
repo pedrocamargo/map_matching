@@ -101,7 +101,7 @@ class Trip:
                 self.gps_trace[f] = gps_data[f][:]
                 self.has_speed = True
 
-        self.gps_trace.sort(["timestamp"])
+        self.gps_trace.sort_values(["timestamp"], ascending=True, inplace=True, kind='quicksort', na_position='last')
         self.gps_trace.reset_index(drop=True)
         self.pre_process()
 

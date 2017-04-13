@@ -454,7 +454,6 @@ class Graph:
                 print 'Cost field with wrong type. Converting to float64'
                 self.cost = self.graph[cost_field].astype(np.float64)
 
-        skim_fields = []
         if self.cost is not None:
             if not skim_fields:
                 skim_fields = [self.cost_field, self.cost_field]

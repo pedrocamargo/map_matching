@@ -24,6 +24,7 @@ class Network:
         self.links_df = None
         self.network_fields = None
         self.orig_cost = None
+        self.interpolation_cost = None
 
         # Fields necessary for running the algorithm
         self.mandatory_fields = ["trip_id", "ping_id", "latitude", "longitude", "timestamp"]
@@ -59,7 +60,12 @@ class Network:
         self.graph.create_from_geography(network_file, link_id, direction, cost_field, skims)
         self.graph.cost = self.graph.graph[cost_field].astype(np.float64)
         self.orig_cost = np.copy(self.graph.cost)
-        self.graph.set_graph()
+        if network_fields['interpolation'] == cost_field:
+            self.interpolation_cost = self.orig_cost
+        else:
+            self.interpolation_cost = self.graph.skims[:, 0]
+
+        self.graph.set_graph(cost_field=cost_field, skim_fields=[network_fields['interpolation']])
         self.graph.save_to_disk(os.path.join(self.output_folder, 'GRAPH USED IN ANALYSIS.aeg'))
 
         self.create_buffers(network_file, network_fields)
@@ -151,6 +157,6 @@ class Network:
             self.idx_nodes.insert(i_d, geom.bounds)
             x, y = geom.centroid.coords.xy
             self.nodes.append([i_d, float(x[0]), float(y[0])])
-        self.nodes = pd.DataFrame(self.nodes, columns = ['ID', 'X', 'Y'])
+        self.nodes = pd.DataFrame(self.nodes, columns = ['ID', 'X', 'Y']).set_index(['ID'])
         print '     NODES spatial index created successfully'
 
