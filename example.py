@@ -1,6 +1,7 @@
+import os, sys
+os.chdir('/home/pedro/SourceCode/map_matching')
 import pandas as pd
 from map_matching import *
-from time import clock
 
 out_folder = load_parameters('output_folder')
 
@@ -26,23 +27,17 @@ field_dict = {"latitude": "LATITUDE",
 
 trips.populate_with_dataframe(df, field_dict)
 
-
 # Loading the NETWORK
 net = Network(out_folder)
 par = load_parameters('geoprocessing parameters')
 net.set_geometry_parameters(par)
 
+net.load_nodes('example_data/FAF_Nodes.shp', 'ID')
+
 p = load_parameters('network file fields')
-net.load_network('example_data/FAF_network.shp', p)
+net.load_network('example_data/FAF_Network.shp', p)
 
-print
-t = clock()
-find_stops(trips)
-print 'Finding stops:', clock()-t
 
-t = clock()
-find_network_links(trips, net)
-print 'Finding links:', clock()-t
+map_match(trips, net)
 
-print trips.graph_links
-print trips.used_links
+print 1

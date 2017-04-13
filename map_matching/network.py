@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import shapefile  # pip install pyshp
 from rtree import index  # Wheel from Chris Gohlke's  website
@@ -21,6 +22,8 @@ class Network:
         self.azimuth_tolerance = None
         self.buffers = {}
         self.links_df = None
+        self.network_fields = None
+        self.orig_cost = None
 
         # Fields necessary for running the algorithm
         self.mandatory_fields = ["trip_id", "ping_id", "latitude", "longitude", "timestamp"]
@@ -32,6 +35,7 @@ class Network:
 
         # Creates the dataframe for the GPS trace
         self.idx_links = index.Index()
+        self.idx_nodes = index.Index()
 
         # Indicators to show if we have the optional fields in the data
         self.has_speed = False
@@ -42,17 +46,20 @@ class Network:
         self.azimuth_tolerance = parameters['azimuth tolerance']
 
     def load_network(self, network_file, network_fields):
-
+        self.network_fields = network_fields
     # First we load the graph itself
         print 'Creating graph from shapefile'
         link_id = network_fields['link_id']
         direction = network_fields['direction']
-        cost = network_fields['cost']
-        skims = []
-        if network_fields['interpolation'] != cost:
+        cost_field = network_fields['cost']
+        skims=[]
+        if network_fields['interpolation'] != cost_field:
             skims.append(network_fields['interpolation'])
 
-        self.graph.create_from_geography(network_file, link_id, direction, cost, skims)
+        self.graph.create_from_geography(network_file, link_id, direction, cost_field, skims)
+        self.graph.cost = self.graph.graph[cost_field].astype(np.float64)
+        self.orig_cost = np.copy(self.graph.cost)
+        self.graph.set_graph()
         self.graph.save_to_disk(os.path.join(self.output_folder, 'GRAPH USED IN ANALYSIS.aeg'))
 
         self.create_buffers(network_file, network_fields)
@@ -94,7 +101,7 @@ class Network:
                 w.poly(parts=[[[x, y] for x, y in zip(x, y)]])
                 w.record(i_d)
             except:
-                print 'Link', i_d, 'could not have its buffer computed'
+                print '     ','Link', i_d, 'could not have its buffer computed'
 
 
             # Builds the dataframe
@@ -122,6 +129,28 @@ class Network:
 
 
         self.links_df = D
+        print '     LINKS spatial index created successfully'
 
-    def load_nodes(self, nodes_file):
-        pass
+    def reset_costs(self):
+        cost_field = self.network_fields['cost']
+        self.graph.cost = self.graph.graph[cost_field].astype(np.float64)
+
+    def load_nodes(self, nodes_file, id_field):
+
+        # Now we load the layer as geographic objects for the actual analysis
+        source = fiona.open(nodes_file, 'r')
+
+        azims = []
+        dirs = []
+        ids = []
+        self.nodes = []
+        print 'Creating nodes spatial index'
+        for feature in source:
+            geom = shape(feature['geometry'])
+            i_d = int(feature["properties"][id_field])
+            self.idx_nodes.insert(i_d, geom.bounds)
+            x, y = geom.centroid.coords.xy
+            self.nodes.append([i_d, float(x[0]), float(y[0])])
+        self.nodes = pd.DataFrame(self.nodes, columns = ['ID', 'X', 'Y'])
+        print '     NODES spatial index created successfully'
+

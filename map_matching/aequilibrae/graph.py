@@ -13,7 +13,8 @@
  Repository:  https://github.com/AequilibraE/AequilibraE
 
  Created:    June/05/2015
- Updated:    25/02/2017
+ Updated:    25/02/2017from AoN import VERSION
+print VERSION
  Copyright:   (c) AequilibraE authors
  Licence:     See LICENSE.TXT
  -----------------------------------------------------------------------------------------------------------
@@ -25,7 +26,7 @@ import cPickle
 from datetime import datetime
 import uuid
 
-VERSION = "0.3.5"
+VERSION = "0.3.3"
 
 
 '''description: Description of the graph (OPTIONAL)
@@ -95,9 +96,7 @@ class Graph:
 
     # Create a graph from a shapefile. To be upgraded to ANY geographic file in the future
     def create_from_geography(self, geo_file, id_field, dir_field, cost_field, skim_fields = [], anode="A_NODE", bnode="B_NODE"):
-        #try:
         import shapefile
-        #try:
         error = None
         geo_file_records = shapefile.Reader(geo_file)
         records = geo_file_records.records()
@@ -469,7 +468,6 @@ class Graph:
                 print 'Before setting skims, you need to set the cost field'
 
         t = False
-        print skim_fields
         for i in skim_fields:
             if self.graph[i].dtype != np.float64:
                 t = True

@@ -18,6 +18,7 @@ class Trip:
         self.graph_links = None
         self.stops = None
         self.error = None
+        self.path = None
 
         # Indicators to show if we have the optional fields in the data
         self.has_speed = False

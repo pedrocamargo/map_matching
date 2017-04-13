@@ -35,7 +35,7 @@ stops parameters:
 # Time in seconds
 # Distance in km. Measured as Great circle distance between each consecutive ping
   Maximum space:
-    time: 1200
+    time: 10800
     min distance: 5
     max distance: 20
 

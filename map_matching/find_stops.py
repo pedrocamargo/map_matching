@@ -117,7 +117,7 @@ def find_stops(trip):
                 trip.stops.insert(0,[trip.gps_trace['longitude'].iloc[-0], trip.gps_trace['latitude'].iloc[-0], trip.gps_trace['timestamp'].iloc[-0], -99999999, 0.0])
                 trip.stops.append([trip.gps_trace['longitude'].iloc[-1], trip.gps_trace['latitude'].iloc[-1], trip.gps_trace['timestamp'].iloc[-1], 99999999, 0.0])
 
-        trip.stops = pd.DataFrame(trip.stops, columns=['latitude', 'longitude', 'stop_time', 'duration', 'coverage'])
+        trip.stops = pd.DataFrame(trip.stops, columns=['longitude', 'latitude', 'stop_time', 'duration', 'coverage'])
 
 def fstop(speed, stopped_speed):
     if speed < stopped_speed:
