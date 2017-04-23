@@ -1,10 +1,5 @@
 output_folder: "example_data/outputs"
 
-# Parameters to guide the computational performance
-processing:
-  cores: 1
-
-
 geoprocessing parameters:
   buffer size: 0.0046 #Buffer around the links to capture links likely used. Unit is degrees
                       # Each 0.0001 correspond to approximately 11m (36ft) in the radius of the buffer
@@ -18,7 +13,7 @@ network file fields:
   interpolation: length
 
   # Optional fields. Fill with 0 if not applicable
-  azimuth: 0
+  azimuth: AUTO  #For on-the-fly computation, use AUTO
   speed_AB: 0
   speed_BA: 0
 
@@ -39,7 +34,7 @@ stops parameters:
     min distance: 5
     max distance: 20
 
-#This is the algorithm commonly used for ATRI truck GPS data. Initially developed by Pinjari et. Al and improved by
+# This is the algorithm commonly used for ATRI truck GPS data. Initially developed by Pinjari et. Al and improved by
 # Camargo, Hong and Livshits (2017)
   Delivery stop:
     stopped speed: 8  # in km/h

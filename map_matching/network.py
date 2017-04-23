@@ -8,6 +8,7 @@ from shapely.geometry import shape
 import os
 from aequilibrae import Graph
 from shapely.ops import cascaded_union
+from linebearing import compute_line_bearing
 
 # writing to SQLITE comes largely from http://gis.stackexchange.com/questions/141818/insert-geopandas-geodataframe-into-spatialite-database
 class Network:
@@ -94,7 +95,10 @@ class Network:
             self.idx_links.insert(i_d, link_buffer.bounds)
 
             if network_fields['azimuth']:
-                azim = feature["properties"][network_fields['azimuth']]
+                if network_fields['azimuth'] == "AUTO":
+                    azim = compute_line_bearing(feature['geometry']['coordinates'][0], feature['geometry']['coordinates'][-1])
+                else:
+                    azim = feature["properties"][network_fields['azimuth']]
             else:
                 azim = -1
 

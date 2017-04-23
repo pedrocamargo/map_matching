@@ -1,6 +1,4 @@
-import numpy as np
 import pandas as pd
-import fiona
 
 class Trip:
     def __init__(self):

@@ -40,4 +40,3 @@ net.load_nodes('example_data/FAF_Nodes.shp', 'ID')
 map_match(trips, net)
 
 print trips.path.to_csv(os.path.join(out_folder, 'result.csv'), index=False )
-print 1
