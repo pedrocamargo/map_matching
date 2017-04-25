@@ -7,6 +7,7 @@ Camargo, P., Hong, S., Livshits., 'Expanding the Uses of Truck GPS Data in Freig
 ## Dependencies
 The code depends on a number of specialized libraries
 
+* PyYaml
 ##### Data frames and array computation
 * Pandas
 * NumPY
