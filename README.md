@@ -22,7 +22,7 @@ The code depends on a number of specialized libraries
 ##### Path Computation
 * AequilibraE
 
-Since AequilibraE is not yet an stablished library, binaries for Windows 32 and 64 bits, MAC and Linux are provided.
+Since AequilibraE is not yet an established library, binaries for Windows 32 and 64 bits, MAC and Linux are provided.
 The source code for the relevant portions of AequilibraE at the time of compilation is also included in this project
 For further references, https://github.com/AequilibraE/AequilibraE
  
