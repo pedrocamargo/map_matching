@@ -83,6 +83,7 @@ def find_stops(trip):
 
             # compute how long the vehicle was stopped for each 
             trip.gps_trace['stopped'] = trip.gps_trace.apply(lambda row: fstop(row['speed'], trip.stops_parameters['stopped speed']), axis=1)
+            trip.gps_trace['traveled_time'] = trip.gps_trace["traveled_time"].shift(-1)
 
             # We check if the vehicle was speeding too much
             all_stopped = trip.gps_trace.index[trip.gps_trace.stopped == 1]
@@ -114,10 +115,10 @@ def find_stops(trip):
                             trip.stops.append([x_avg, y_avg, stop_time, tot_time, coverage])
             else:
                 # We append the first and last ping for each vehicle
-                trip.stops.insert(0,[trip.gps_trace['longitude'].iloc[-0], trip.gps_trace['latitude'].iloc[-0], trip.gps_trace['timestamp'].iloc[-0], -99999999, 0.0])
+                trip.stops.insert(0,[trip.gps_trace['latitude'].iloc[-0], trip.gps_trace['timestamp'].iloc[-0], -99999999, 0.0])
                 trip.stops.append([trip.gps_trace['longitude'].iloc[-1], trip.gps_trace['latitude'].iloc[-1], trip.gps_trace['timestamp'].iloc[-1], 99999999, 0.0])
 
-        trip.stops = pd.DataFrame(trip.stops, columns=['longitude', 'latitude', 'stop_time', 'duration', 'coverage'])
+        trip.stops = pd.DataFrame(trip.stops, columns=['latitude', 'longitude', 'stop_time', 'duration', 'coverage'])
 
 def fstop(speed, stopped_speed):
     if speed < stopped_speed:

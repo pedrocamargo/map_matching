@@ -30,17 +30,15 @@ trips.populate_with_dataframe(df, field_dict)
 
 find_stops(trips)
 
+# Loading the NETWORK
+net = Network(out_folder)
+par = load_parameters('geoprocessing parameters')
+net.set_geometry_parameters(par)
 
-# # Loading the NETWORK
-# net = Network(out_folder)
-# par = load_parameters('geoprocessing parameters')
-# net.set_geometry_parameters(par)
-#
-# p = load_parameters('network file fields')
-# net.load_network('example_data/FAF_Network.shp', p)
-#
-# net.load_nodes('example_data/FAF_Nodes.shp', 'ID')
-#
-# map_match(trips, net)
-#
-# print trips.path.to_csv(os.path.join(out_folder, 'result.csv'), index=False )
+p = load_parameters('network file fields')
+net.load_network('example_data/FAF_Network.shp', p)
+
+net.load_nodes('example_data/FAF_Nodes.shp', 'ID')
+
+map_match(trips, net)
+print trips.path.to_csv(os.path.join(out_folder, 'result_atri_like_data.csv'), index=False )
