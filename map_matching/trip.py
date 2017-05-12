@@ -7,16 +7,15 @@ class Trip:
         self.optional_fields = ["azimuth", "speed"]
         self.all_fields = self.mandatory_fields + self.optional_fields
 
-        # Creates the dataframe for the GPS trace
-        data = {x:[] for x in self.all_fields}
-        self.gps_trace = pd.DataFrame(data)
-
         # Creates the properties for the outputs
+        self.gps_trace = None
         self.used_links = None
         self.graph_links = None
         self.stops = None
         self.error = None
         self.path = None
+
+        self.reset()
 
         # Indicators to show if we have the optional fields in the data
         self.has_speed = False
@@ -103,7 +102,6 @@ class Trip:
         self.gps_trace.reset_index(drop=True)
         self.pre_process()
 
-
     def pre_process(self):
         self.gps_trace['prev_lat'] = self.gps_trace["latitude"].shift(1)
         self.gps_trace.prev_lat.iloc[0] = self.gps_trace.latitude.iloc[0]
@@ -111,3 +109,16 @@ class Trip:
         self.gps_trace.prev_long.iloc[0] = self.gps_trace.longitude.iloc[0]
         self.gps_trace['prev_timestamp'] = self.gps_trace["timestamp"].shift(1)
         self.gps_trace.prev_timestamp.iloc[0] = self.gps_trace.timestamp.iloc[0]
+
+
+    def reset(self):
+        # Creates the dataframe for the GPS trace
+        data = {x: [] for x in self.all_fields}
+        self.gps_trace = pd.DataFrame(data)
+
+        # Creates the properties for the outputs
+        self.used_links = None
+        self.graph_links = None
+        self.stops = None
+        self.error = None
+        self.path = None
