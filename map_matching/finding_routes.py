@@ -15,7 +15,7 @@ def find_route(trip, network):
     aux_neg1 = np.zeros(1, np.int_)
     aux_neg1.fill(-1)
     network.reset_costs()
-    network.graph.cost[a[:]] /= 10
+    network.graph.cost[a[:]] /= 20
 
     # # We select the nodes that are part of the signalized links
     nodes_a = network.graph.graph['a_node'][network.graph.ids[a]]
@@ -96,7 +96,7 @@ def find_route(trip, network):
                                 arrives_tstamps[q] = vehicle_trace.timestamp[k]
                                 distances[q] = d
 
-                                # Time stamps for the origin and destination of the path
+            # Time stamps for the origin and destination of the path
                 arrives_tstamps[origin] = stop_sequence[i][1]
                 leaves_tstamps[origin] = stop_sequence[i][1] + timedelta(seconds=int(stop_sequence[i][2]))
 
@@ -130,25 +130,27 @@ def find_route(trip, network):
                 all_nodes.append(results.path_nodes.copy())
 
             results.reset()
-    all_links = np.hstack(tuple(all_links))
-    all_nodes = np.hstack(tuple(all_nodes))
-    all_arrives_tstamps = np.hstack(tuple(all_arrives_tstamps))
-    all_leaves_tstamps = np.hstack(tuple(all_leaves_tstamps))
+    if all_links:
+        all_links = np.hstack(tuple(all_links))
+        all_nodes = np.hstack(tuple(all_nodes))
+        all_arrives_tstamps = np.hstack(tuple(all_arrives_tstamps))
+        all_leaves_tstamps = np.hstack(tuple(all_leaves_tstamps))
 
-    # We add the truck's path to a dataframe
-    df = []
-    mp = 0
-    for i, q in enumerate(all_nodes):
-        if all_links[i] != -1:
-            link = all_links[i]
-        else:
-            link = np.nan
-        direc = network.graph.graph['direction'][all_links[i]]
-        df.append([all_arrives_tstamps[i], all_leaves_tstamps[i], network.nodes.index[q], link, direc, network.nodes.Y[q], network.nodes.X[q], mp])
-        if all_links[i] > 0:
-            mp = mp + network.interpolation_cost[all_links[i]]
-
-    df_head = ['Timestamp', 'leavenode', 'node', 'link','direction','x', 'y', 'milepost']
+        # We add the truck's path to a dataframe
+        df = []
+        mp = 0
+        for i, q in enumerate(all_nodes):
+            if all_links[i] != -1:
+                link = all_links[i]
+            else:
+                link = np.nan
+            direc = network.graph.graph['direction'][all_links[i]]
+            df.append([all_arrives_tstamps[i], all_leaves_tstamps[i], network.nodes.index[q], link, direc, network.nodes.Y[q], network.nodes.X[q], mp])
+            if all_links[i] > 0:
+                mp = mp + network.interpolation_cost[all_links[i]]
+    else:
+        df = [[-1, -1, -1, -1, -1, -1, -1, -1]]
+    df_head = ['Timestamp', 'leavenode', 'node', 'link', 'direction', 'y', 'x', 'milepost']
     df = pd.DataFrame(df, columns=df_head)
     trip.path = df
     # We reset the graph costs
