@@ -56,6 +56,7 @@ def find_stops(trip):
             par_time = trip.stops_parameters['time']
             max_distance = trip.stops_parameters['max distance']
             min_distance = trip.stops_parameters['min distance']
+            trip.gps_trace['delivery_stop'] = -1
 
             cd = 0
             ct = 0
@@ -120,7 +121,7 @@ def find_stops(trip):
                 trip.stops.insert(0,[trip.gps_trace['latitude'].iloc[-0], trip.gps_trace['timestamp'].iloc[-0], -99999999, 0.0])
                 trip.stops.append([trip.gps_trace['longitude'].iloc[-1], trip.gps_trace['latitude'].iloc[-1], trip.gps_trace['timestamp'].iloc[-1], 99999999, 0.0])
 
-        trip.gps_trace.delivery_stop = trip.gps_trace.delivery_stop * trip.gps_trace.stopped
+            trip.gps_trace.delivery_stop = trip.gps_trace.delivery_stop * trip.gps_trace.stopped
         trip.stops = pd.DataFrame(trip.stops, columns=['latitude', 'longitude', 'stop_time', 'duration', 'coverage'])
 
 def fstop(speed, stopped_speed):
