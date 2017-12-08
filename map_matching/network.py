@@ -9,6 +9,7 @@ import os
 from aequilibrae import Graph
 from shapely.ops import cascaded_union
 from linebearing import compute_line_bearing
+from shutil import copyfile
 
 # writing to SQLITE comes largely from http://gis.stackexchange.com/questions/141818/insert-geopandas-geodataframe-into-spatialite-database
 class Network:
@@ -67,6 +68,8 @@ class Network:
             self.interpolation_cost = self.graph.skims[:, 0]
 
         self.graph.set_graph(cost_field=cost_field, skim_fields=[network_fields['interpolation']])
+        if not os.path.exists(self.output_folder):
+            os.makedirs(self.output_folder)
         self.graph.save_to_disk(os.path.join(self.output_folder, 'GRAPH USED IN ANALYSIS.aeg'))
 
         self.create_buffers(network_file, network_fields)
@@ -80,6 +83,7 @@ class Network:
         source_schema = source.schema.copy() # Copy the source schema
         source_crs = source.crs['init'][5:]
 
+        projection_file = network_file[:-3] + 'prj'
         w = shapefile.Writer(shapefile.POLYGON)
         w.field(link_id, 'I', '40')
         azims = []
@@ -124,7 +128,10 @@ class Network:
         D['graph_ba'] = -1
         del d
 
-        w.save(os.path.join(self.output_folder, 'BUFFERS_USED_IN_ANALYSIS.SHP'))
+        buffer_name = 'BUFFERS_USED_IN_ANALYSIS'
+        if os.path.isfile(projection_file):
+            copyfile(projection_file, os.path.join(self.output_folder, buffer_name + '.prj'))
+        w.save(os.path.join(self.output_folder, buffer_name + '.SHP'))
         del w
 
         # Brings the graph info for the Dataframe
