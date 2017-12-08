@@ -1,5 +1,0 @@
-<application>
-  <component name="IntentionManagerSettings">
-    <ignoreAction name="Python/Specify type for reference in docstring" />
-  </component>
-</application>
