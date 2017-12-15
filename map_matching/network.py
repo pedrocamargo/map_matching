@@ -60,14 +60,14 @@ class Network:
             skims.append(network_fields['interpolation'])
 
         self.graph.create_from_geography(network_file, link_id, direction, cost_field, skims)
-        self.graph.cost = self.graph.graph[cost_field].astype(np.float64)
+        self.graph.cost = self.graph.graph[cost_field.lower()].astype(np.float64)
         self.orig_cost = np.copy(self.graph.cost)
         if network_fields['interpolation'] == cost_field:
             self.interpolation_cost = self.orig_cost
         else:
             self.interpolation_cost = self.graph.skims[:, 0]
 
-        self.graph.set_graph(cost_field=cost_field, skim_fields=[network_fields['interpolation']])
+        self.graph.set_graph(cost_field=cost_field.lower(), skim_fields=[network_fields['interpolation'].lower()])
         if not os.path.exists(self.output_folder):
             os.makedirs(self.output_folder)
         self.graph.save_to_disk(os.path.join(self.output_folder, 'GRAPH USED IN ANALYSIS.aeg'))
@@ -80,8 +80,6 @@ class Network:
 
     # Now we load the layer as geographic objects for the actual analysis
         source = fiona.open(network_file, 'r')
-        source_schema = source.schema.copy() # Copy the source schema
-        source_crs = source.crs['init'][5:]
 
         projection_file = network_file[:-3] + 'prj'
         w = shapefile.Writer(shapefile.POLYGON)
