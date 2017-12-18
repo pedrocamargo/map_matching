@@ -104,17 +104,18 @@ class Graph:
         a = []
         def find_field_index(fields, field_name):
             for i, f in enumerate(fields):
-                if f[0] == field_name:
+                if f == field_name.upper():
                     return i - 1
             return -1
 
         # collect the fields in the network
         check_titles = [id_field, dir_field, anode, bnode, cost_field]
-        id_field = find_field_index(geo_file_records.fields, id_field)
-        dir_field = find_field_index(geo_file_records.fields, dir_field)
-        cost_field = find_field_index(geo_file_records.fields, cost_field)
-        anode = find_field_index(geo_file_records.fields, anode)
-        bnode = find_field_index(geo_file_records.fields, bnode)
+        all_fields = [x[0].upper() for x in geo_file_records.fields]
+        id_field = find_field_index(all_fields, id_field)
+        dir_field = find_field_index(all_fields, dir_field)
+        cost_field = find_field_index(all_fields, cost_field)
+        anode = find_field_index(all_fields, anode)
+        bnode = find_field_index(all_fields, bnode)
 
         # Appends all fields to the list of fields to be used
         all_types = [np.int32, np.int32, np.int32, np.float64, np.float64, np.int8]
@@ -125,7 +126,7 @@ class Graph:
         # Loads the skim index fields
         dict_field = {}
         for k in skim_fields:
-            skim_index = find_field_index(geo_file_records.fields, k)
+            skim_index = find_field_index(all_fields, k)
             check_fields.append(skim_index)
             check_titles.append(k)
             types_to_check.append(float)
