@@ -43,10 +43,6 @@ class Network():
         self.has_speed = False
         self.has_azimuth = False
 
-    def set_output_folder(self, output_folder):
-        # Name of the output folder
-        self.output_folder = output_folder
-
     def set_geometry_parameters(self, parameters):
         self.buffer_size = parameters['buffer size']
         self.azimuth_tolerance = parameters['azimuth tolerance']

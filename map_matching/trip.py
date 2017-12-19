@@ -1,6 +1,9 @@
 import pandas as pd
+import numpy as np
+from geopy.distance import great_circle
 
-class Trip:
+
+class Trip():
     def __init__(self):
         # Fields necessary for running the algorithm
         self.mandatory_fields = ["ping_id", "latitude", "longitude", "timestamp"]
@@ -110,6 +113,40 @@ class Trip:
         self.gps_trace['prev_timestamp'] = self.gps_trace["timestamp"].shift(1)
         self.gps_trace.prev_timestamp.iloc[0] = self.gps_trace.timestamp.iloc[0]
 
+        # Create data quality fields
+        self.gps_trace['distance'] = self.gps_trace.apply(
+            lambda x: self.gc(x['longitude'], x['latitude'], x['prev_long'], x['prev_lat']), axis=1)
+        self.gps_trace['traveled_time'] = self.gps_trace.apply(
+            lambda row: self.timediff(row['timestamp'], row['prev_timestamp']), axis=1)
+        self.gps_trace['speed'] = self.gps_trace.apply(lambda row: self.fspeed(row['distance'], row['traveled_time']),
+                                                       axis=1)
+
+        # Verify data quality
+        w = int(self.gps_trace.traveled_time[self.gps_trace.speed > self.data_quality_parameters['max_speed']].sum())
+        if w > self.data_quality_parameters['max_speed_time']:
+            # If there is evidence of speeding for longer than tolerated, we will see if it happens continuously
+            with_error = self.gps_trace[self.gps_trace.speed > self.data_quality_parameters['max_speed']]
+            w = 0
+            prev = with_error.index[0] - 1
+            for we in with_error.index:
+                if we == prev + 1:
+                    w += with_error.traveled_time[we]
+                    prev = we
+                else:
+                    w = with_error.traveled_time[we]
+                if w > self.data_quality_parameters['max_speed_time']:
+                    self.error = 'Max speed surpassed for', w, 'seconds'
+                    break
+
+        # Check number of pings
+        if self.gps_trace.prev_lat.shape[0] < self.data_quality_parameters['minimum_pings']:
+            self.error = 'Vehicle with only', self.gps_trace.prev_lat.shape[0], 'pings'
+
+        # Test ping coverage
+        p1 = [np.max(self.gps_trace['latitude']), np.max(self.gps_trace['longitude'])]
+        p2 = [np.min(self.gps_trace['latitude']), np.min(self.gps_trace['longitude'])]
+        if self.gc(p1[1], p1[0], p2[1], p2[0]) < self.data_quality_parameters['minimum_coverage']:
+            self.error = 'Vehicle covers only', self.gc(p1[1], p1[0], p2[1], p2[0]), 'km'
 
     def reset(self):
         # Creates the dataframe for the GPS trace
@@ -122,3 +159,28 @@ class Trip:
         self.stops = None
         self.error = None
         self.path = None
+
+    @staticmethod
+    def fstop(speed, stopped_speed):
+        if speed < stopped_speed:
+            return 1
+        else:
+            return 0
+
+    @staticmethod
+    def timediff(time1, time2):
+        return float((time1 - time2).seconds)
+
+    @staticmethod
+    def fspeed(dist, tim):
+        if tim > 0:
+            return dist / (tim / 3600)
+        else:
+            return -1
+    # Great circle distance function
+    @staticmethod
+    def gc(a, b, c, d):
+        p1 = (b, a)
+        p2 = (d, c)
+        return great_circle(p1, p2).kilometers
+

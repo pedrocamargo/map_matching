@@ -57,6 +57,7 @@ I only implemented a method to import data from CSV. However, it is easy to add 
 ##### Parallelization
 
 Map-matching (for cold data) is an embarassingly parallel problem. However, no advanced parallelization was implemented so far. Contributions on this issue are welcome
+However, the path computation part of the algorithm DOES release the GIL, so threading might be worth pursuing
 
 # Using the code
 
