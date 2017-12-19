@@ -10,10 +10,11 @@ from aequilibrae import Graph
 from shapely.ops import cascaded_union
 from linebearing import compute_line_bearing
 from shutil import copyfile
-
 # writing to SQLITE comes largely from http://gis.stackexchange.com/questions/141818/insert-geopandas-geodataframe-into-spatialite-database
-class Network:
-    def __init__(self, output_folder):
+
+
+class Network():
+    def __init__(self):
 
         # Creates the properties for the outputs
         self.links = None
@@ -27,14 +28,12 @@ class Network:
         self.network_fields = None
         self.orig_cost = None
         self.interpolation_cost = None
+        self.output_folder = None
 
         # Fields necessary for running the algorithm
         self.mandatory_fields = ["trip_id", "ping_id", "latitude", "longitude", "timestamp"]
         self.optional_fields = ["azimuth", "speed"]
         self.all_fields = self.mandatory_fields + self.optional_fields
-
-        # Name of the output folder
-        self.output_folder = output_folder
 
         # Creates the dataframe for the GPS trace
         self.idx_links = index.Index()
@@ -43,6 +42,10 @@ class Network:
         # Indicators to show if we have the optional fields in the data
         self.has_speed = False
         self.has_azimuth = False
+
+    def set_output_folder(self, output_folder):
+        # Name of the output folder
+        self.output_folder = output_folder
 
     def set_geometry_parameters(self, parameters):
         self.buffer_size = parameters['buffer size']

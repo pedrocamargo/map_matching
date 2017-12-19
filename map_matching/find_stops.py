@@ -15,7 +15,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # Somewhat based on http://rexdouglass.com/fast-spatial-joins-in-python-with-a-spatial-index/
-def find_stops(trip):
+def find_stops(trip, stops_table=None):
 
     # Create data quality fields
     trip.gps_trace['distance'] = trip.gps_trace.apply(lambda x: gc(x['longitude'], x['latitude'], x['prev_long'], x['prev_lat']), axis=1)
@@ -80,7 +80,7 @@ def find_stops(trip):
             else:
                 trip.stops[-1][3] = 99999999
 
-        if trip.stops_algorithm == 'Delivery stop':
+        elif trip.stops_algorithm == 'Delivery stop':
 
             # compute how long the vehicle was stopped for each 
             trip.gps_trace['stopped'] = trip.gps_trace.apply(lambda row: fstop(row['speed'], trip.stops_parameters['stopped speed']), axis=1)
@@ -122,6 +122,9 @@ def find_stops(trip):
                 trip.stops.append([trip.gps_trace['longitude'].iloc[-1], trip.gps_trace['latitude'].iloc[-1], trip.gps_trace['timestamp'].iloc[-1], 99999999, 0.0])
 
             trip.gps_trace.delivery_stop = trip.gps_trace.delivery_stop * trip.gps_trace.stopped
+
+        elif trip.stops_algorithm == 'Exogenous':
+            trip.stops = stops_table
         trip.stops = pd.DataFrame(trip.stops, columns=['latitude', 'longitude', 'stop_time', 'duration', 'coverage'])
 
 def fstop(speed, stopped_speed):

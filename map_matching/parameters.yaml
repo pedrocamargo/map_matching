@@ -1,5 +1,3 @@
-output_folder: "example_data/outputs"
-
 geoprocessing parameters:
   buffer size: 0.0046 #Buffer around the links to capture links likely used. Unit is degrees
                       # Each 0.0001 correspond to approximately 11m (36ft) in the radius of the buffer

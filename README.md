@@ -2,7 +2,7 @@
 Map matching / route reconstruction algorithm
 
 If you use this code, please reference it in the following way:
-Camargo, P., Hong, S., Livshits., 'Expanding the Uses of Truck GPS Data in Freight Modeling and Planning Activities', Transportation Research Record, In Press
+Camargo, P., Hong, S., Livshits, V., 'Expanding the Uses of Truck GPS Data in Freight Modeling and Planning Activities', Transportation Research Record, In Press
 
 ## Dependencies
 The code depends on a number of specialized libraries

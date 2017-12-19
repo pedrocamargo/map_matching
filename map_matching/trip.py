@@ -22,7 +22,7 @@ class Trip:
         self.has_azimuth = False
 
         # related to stop algorithms
-        self.stops_algorithms_available = ["Maximum space", "Delivery stop"]
+        self.stops_algorithms_available = ["Maximum space", "Delivery stop", "Exogenous"]
         self.stops_algorithm = None
         self.stops_parameters = None
         self.set_stop_algorithm()
