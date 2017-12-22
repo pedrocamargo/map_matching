@@ -89,10 +89,14 @@ class Network:
         ids = []
 
         print 'Creating network spatial index'
+
         for feature in source:
             geom = shape(feature['geometry'])
-            i_d = int(feature["properties"][link_id])
-            direc = int(feature["properties"][direction])
+            properties = feature["properties"]
+            properties_lower = {k.lower(): v for k, v in properties.items()}
+
+            i_d = int(properties_lower[link_id.lower()])
+            direc = int(properties_lower[direction.lower()])
             link_buffer = cascaded_union(geom.buffer(self.buffer_size, resolution=self.buffer_resolution))
             self.idx_links.insert(i_d, link_buffer.bounds)
 
@@ -100,7 +104,7 @@ class Network:
                 if network_fields['azimuth'] == "AUTO":
                     azim = compute_line_bearing(feature['geometry']['coordinates'][0], feature['geometry']['coordinates'][-1])
                 else:
-                    azim = feature["properties"][network_fields['azimuth']]
+                    azim = properties_lower[network_fields['azimuth'].lower()]
             else:
                 azim = -1
 
