@@ -137,12 +137,12 @@ class MapMatcher():
                                 x_avg = np.average(self.trip.gps_trace['longitude'][start_events[i]:end_events[i]])
                                 y_avg = np.average(self.trip.gps_trace['latitude'][start_events[i]:end_events[i]])
                                 stop_time = self.trip.gps_trace.timestamp[start_events[i]]
-                                self.trip.stops.append([x_avg, y_avg, stop_time, tot_time, coverage])
+                                self.trip.stops.append([y_avg, x_avg, stop_time, tot_time, coverage])
                 else:
                     # We append the first and last ping for each vehicle
-                    self.trip.stops.insert(0, [self.trip.gps_trace['latitude'].iloc[-0], self.trip.gps_trace['timestamp'].iloc[-0],
-                                          -99999999, 0.0])
-                    self.trip.stops.append([self.trip.gps_trace['longitude'].iloc[-1], self.trip.gps_trace['latitude'].iloc[-1],
+                    self.trip.stops.insert(0, [self.trip.gps_trace['latitude'].iloc[-0], self.trip.gps_trace['longitude'].iloc[-0],
+                                       self.trip.gps_trace['timestamp'].iloc[-0], -99999999, 0.0])
+                    self.trip.stops.append([self.trip.gps_trace['latitude'].iloc[-1], self.trip.gps_trace['longitude'].iloc[-1],
                                        self.trip.gps_trace['timestamp'].iloc[-1], 99999999, 0.0])
 
                 self.trip.gps_trace.delivery_stop = self.trip.gps_trace.delivery_stop * self.trip.gps_trace.stopped
