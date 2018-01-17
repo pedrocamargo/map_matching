@@ -116,10 +116,10 @@ class Trip():
         # Create data quality fields
         self.gps_trace['distance'] = self.gps_trace.apply(
             lambda x: self.gc(x['longitude'], x['latitude'], x['prev_long'], x['prev_lat']), axis=1)
-        self.gps_trace['traveled_time'] = self.gps_trace.apply(
-            lambda row: self.timediff(row['timestamp'], row['prev_timestamp']), axis=1)
-        self.gps_trace['speed'] = self.gps_trace.apply(lambda row: self.fspeed(row['distance'], row['traveled_time']),
-                                                       axis=1)
+        self.gps_trace['traveled_time'] = (self.gps_trace['timestamp'] - self.gps_trace['prev_timestamp']).dt.seconds.astype(float)
+        self.gps_trace['speed'] = ((self.gps_trace['traveled_time'] <> 0)*(self.gps_trace['distance']/(self.gps_trace['traveled_time']/3600)))
+        self.gps_trace.loc[self.gps_trace['speed'] < 0, "speed"] = -1
+        self.gps_trace['speed'].fillna(-1, inplace=True)
 
         # Verify data quality
         w = int(self.gps_trace.traveled_time[self.gps_trace.speed > self.data_quality_parameters['max_speed']].sum())
@@ -160,23 +160,6 @@ class Trip():
         self.error = None
         self.path = None
 
-    @staticmethod
-    def fstop(speed, stopped_speed):
-        if speed < stopped_speed:
-            return 1
-        else:
-            return 0
-
-    @staticmethod
-    def timediff(time1, time2):
-        return float((time1 - time2).seconds)
-
-    @staticmethod
-    def fspeed(dist, tim):
-        if tim > 0:
-            return dist / (tim / 3600)
-        else:
-            return -1
     # Great circle distance function
     @staticmethod
     def gc(a, b, c, d):

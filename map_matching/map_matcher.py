@@ -28,7 +28,7 @@ class MapMatcher():
 
     def get_default_parameters(self):
         keys = ['data quality', 'geoprocessing parameters', 'network file fields', 'nodes file fields',
-                'stops parameters']
+                'stops parameters', 'map matching']
         for k in keys:
             self.parameters[k] = load_parameters(k)
 
@@ -38,7 +38,8 @@ class MapMatcher():
 
     def set_stop_algorithm(self, stop_algorithm):
         self.trip.set_stop_algorithm(stop_algorithm)
-        self.trip.stops_parameters = self.parameters['stops parameters'][stop_algorithm]
+        if stop_algorithm <> "Exogenous":
+            self.trip.stops_parameters = self.parameters['stops parameters'][stop_algorithm]
 
     def load_network(self, network_file):
         self.network.output_folder = self.output_folder
@@ -83,7 +84,7 @@ class MapMatcher():
                 ct = 0
                 # Append the first stop
                 self.trip.stops.append([self.trip.gps_trace['latitude'].iloc[0], self.trip.gps_trace['longitude'].iloc[0],
-                                   self.trip.gps_trace['timestamp'].iloc[0], -99999999, 0.0])
+                                   self.trip.gps_trace['timestamp'].iloc[0], 0.0, 0.0])
 
                 for i in xrange(0, self.trip.gps_trace.index.shape[0] - 1):
                     cd += self.trip.gps_trace.distance[i]
@@ -104,8 +105,7 @@ class MapMatcher():
             elif self.trip.stops_algorithm == 'Delivery stop':
 
                 # compute how long the vehicle was stopped for each
-                self.trip.gps_trace['stopped'] = self.trip.gps_trace.apply(
-                    lambda row: self.fstop(row['speed'], self.trip.stops_parameters['stopped speed']), axis=1)
+                self.trip.gps_trace['stopped'] = (self.trip.gps_trace['speed'] < self.trip.stops_parameters['stopped speed'])*1
                 self.trip.gps_trace['delivery_stop'] = 0
                 self.trip.gps_trace['traveled_time'] = self.trip.gps_trace["traveled_time"].shift(-1)
 
@@ -141,7 +141,7 @@ class MapMatcher():
                 else:
                     # We append the first and last ping for each vehicle
                     self.trip.stops.insert(0, [self.trip.gps_trace['latitude'].iloc[-0], self.trip.gps_trace['longitude'].iloc[-0],
-                                       self.trip.gps_trace['timestamp'].iloc[-0], -99999999, 0.0])
+                                       self.trip.gps_trace['timestamp'].iloc[-0], 0.0, 0.0])
                     self.trip.stops.append([self.trip.gps_trace['latitude'].iloc[-1], self.trip.gps_trace['longitude'].iloc[-1],
                                        self.trip.gps_trace['timestamp'].iloc[-1], 99999999, 0.0])
 
@@ -155,7 +155,7 @@ class MapMatcher():
         veh_speed = -1
         veh_azimuth = -1
         poly = []
-        poly_time = []
+        poly_time = [] # An array of [link graph id, timestamp the link is possibly used by a ping]
         all_links = []
         for g, t in enumerate(self.trip.gps_trace.index):
             # Collects all info on a ping
@@ -262,7 +262,8 @@ class MapMatcher():
 
             # Reduce costs of possibly used links between O and D.
             self.network.reset_costs()
-            self.network.graph.cost[self.trip.graph_links_time[self.trip.graph_links_time['timestamp'].between(o_time, d_time)]['graph_links'].unique()] /= 20
+            self.network.graph.cost[self.trip.graph_links_time[self.trip.graph_links_time['timestamp'].between(o_time, d_time)]['graph_links'].unique()] /= \
+                                     self.parameters['map matching']['cost discount']
 
             if origin != destination:
                 arrives_tstamps = {}
@@ -320,7 +321,7 @@ class MapMatcher():
                         arrives_tstamps[origin] = stop_sequence[i][1]
                     else:
                         arrives_tstamps[origin] = np.nan
-
+  
                     q1 = []
                     q2 = []
                     for k in list(results.path_nodes):
@@ -437,24 +438,6 @@ class MapMatcher():
             inside = True
 
         return inside
-
-    @staticmethod
-    def fstop(speed, stopped_speed):
-        if speed < stopped_speed:
-            return 1
-        else:
-            return 0
-
-    @staticmethod
-    def timediff(time1, time2):
-        return float((time1 - time2).seconds)
-
-    @staticmethod
-    def fspeed(dist, tim):
-        if tim > 0:
-            return dist / (tim / 3600)
-        else:
-            return -1
 
     # Great circle distance function
     @staticmethod
