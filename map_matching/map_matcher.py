@@ -133,16 +133,16 @@ class MapMatcher():
                             y_max = np.max(self.trip.gps_trace['latitude'][start_events[i]:end_events[i]])
                             coverage = self.gc(x_min, y_max, x_max, y_min)
                             if coverage <= self.trip.stops_parameters['max stop coverage']:
-                                self.trip.gps_trace.ix[start_events[i]:end_events[i], 'delivery_stop'] = 1
+                                self.trip.gps_trace.ix[start_events[i]:min(end_events[i], self.trip.gps_trace.shape[0]-1), 'delivery_stop'] = 1
                                 x_avg = np.average(self.trip.gps_trace['longitude'][start_events[i]:end_events[i]])
                                 y_avg = np.average(self.trip.gps_trace['latitude'][start_events[i]:end_events[i]])
                                 stop_time = self.trip.gps_trace.timestamp[start_events[i]]
-                                self.trip.stops.append([x_avg, y_avg, stop_time, tot_time, coverage])
+                                self.trip.stops.append([y_avg, x_avg, stop_time, tot_time, coverage])
                 else:
                     # We append the first and last ping for each vehicle
-                    self.trip.stops.insert(0, [self.trip.gps_trace['latitude'].iloc[-0], self.trip.gps_trace['timestamp'].iloc[-0],
-                                          -99999999, 0.0])
-                    self.trip.stops.append([self.trip.gps_trace['longitude'].iloc[-1], self.trip.gps_trace['latitude'].iloc[-1],
+                    self.trip.stops.insert(0, [self.trip.gps_trace['latitude'].iloc[-0], self.trip.gps_trace['longitude'].iloc[-0],
+                                       self.trip.gps_trace['timestamp'].iloc[-0], -99999999, 0.0])
+                    self.trip.stops.append([self.trip.gps_trace['latitude'].iloc[-1], self.trip.gps_trace['longitude'].iloc[-1],
                                        self.trip.gps_trace['timestamp'].iloc[-1], 99999999, 0.0])
 
                 self.trip.gps_trace.delivery_stop = self.trip.gps_trace.delivery_stop * self.trip.gps_trace.stopped
@@ -155,6 +155,7 @@ class MapMatcher():
         veh_speed = -1
         veh_azimuth = -1
         poly = []
+        poly_time = []
         all_links = []
         for g, t in enumerate(self.trip.gps_trace.index):
             # Collects all info on a ping
@@ -165,6 +166,7 @@ class MapMatcher():
 
             y = self.trip.gps_trace.at[t, 'latitude']
             x = self.trip.gps_trace.at[t, 'longitude']
+            timestamp = self.trip.gps_trace.at[t, 'timestamp']
             P = (x, y)
 
             # Finds which links are likely to have been used
@@ -178,26 +180,31 @@ class MapMatcher():
                 if direc < 0:
                     graph_id = self.network.links_df.graph_ba[j]
 
-                if graph_id not in poly:
-                    if P.within(self.network.buffers[j]):
-                        if self.trip.has_azimuth:
-                            azim = self.network.links_df.azim[j]
-                            if direc < 0:
-                                azim = self.reverse_azim(azim)
+                if P.within(self.network.buffers[j]):
+                    if self.trip.has_azimuth:
+                        azim = self.network.links_df.azim[j]
+                        if direc < 0:
+                            azim = self.reverse_azim(azim)
 
-                            if self.check_if_inside(veh_azimuth, azim, self.network.azimuth_tolerance):
-                                poly.append(graph_id)
-                                all_links.append(int(j))
-                            if direc == 0:
-                                azim = self.reverse_azim(azim)
-                                if self.check_if_inside(veh_azimuth, azim, self.network.azimuth_tolerance):
-                                    poly.append(self.network.links_df.graph_ba[j])
-                        else:
+                        if self.check_if_inside(veh_azimuth, azim, self.network.azimuth_tolerance):
                             poly.append(graph_id)
+                            poly_time.append([graph_id, timestamp])
                             all_links.append(int(j))
-                            if direc == 0:
+                        if direc == 0:
+                            azim = self.reverse_azim(azim)
+                            if self.check_if_inside(veh_azimuth, azim, self.network.azimuth_tolerance):
                                 poly.append(self.network.links_df.graph_ba[j])
+                                poly_time.append([self.network.links_df.graph_ba[j], timestamp])
+                    else:
+                        poly.append(graph_id)
+                        poly_time.append([graph_id, timestamp])
+                        all_links.append(int(j))
+                        if direc == 0:
+                            poly.append(self.network.links_df.graph_ba[j])
+                            poly_time.append([self.network.links_df.graph_ba[j], timestamp])
+
         self.trip.graph_links = poly
+        self.trip.graph_links_time = pd.DataFrame(poly_time, columns=['graph_links', 'timestamp'])
         self.trip.used_links = all_links
 
     def find_route(self):
@@ -206,8 +213,6 @@ class MapMatcher():
         a = pd.Series(self.trip.graph_links).unique()
         aux_neg1 = np.zeros(1, np.int_)
         aux_neg1.fill(-1)
-        self.network.reset_costs()
-        self.network.graph.cost[a[:]] /= 20
 
         # We select the nodes that are part of the signalized links
         nodes_a = self.network.graph.graph['a_node'][self.network.graph.ids[a]]
@@ -251,7 +256,14 @@ class MapMatcher():
         for i in range(len(stop_sequence) - 1):
             distances = {}
             origin = stop_sequence[i][0]
+            o_time = stop_sequence[i][1]
             destination = stop_sequence[i + 1][0]
+            d_time = stop_sequence[i + 1][1]
+
+            # Reduce costs of possibly used links between O and D.
+            self.network.reset_costs()
+            self.network.graph.cost[self.trip.graph_links_time[self.trip.graph_links_time['timestamp'].between(o_time, d_time)]['graph_links'].unique()] /= 20
+
             if origin != destination:
                 arrives_tstamps = {}
                 leaves_tstamps = {}
