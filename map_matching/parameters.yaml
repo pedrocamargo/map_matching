@@ -39,3 +39,7 @@ stops parameters:
     min time stopped: 300 # 5*60 in seconds   --> minimum stopped time to be considered
     max time stopped: 14400 # 4*60*60 in seconds   --> maximum stopped time to be considered
     max stop coverage: 0.8 # in kilometers
+
+map matching:
+# map matching related parameters
+  cost discount: 20 # possibly used link cost reduction ratio
