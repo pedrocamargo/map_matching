@@ -64,7 +64,7 @@ def find_stops(trip):
             trip.stops.append([trip.gps_trace['latitude'].iloc[0], trip.gps_trace['longitude'].iloc[0],
                           trip.gps_trace['timestamp'].iloc[0], -99999999, 0.0])
 
-            for i in xrange(0, trip.gps_trace.index.shape[0]-1):
+            for i in range(0, trip.gps_trace.index.shape[0]-1):
                 cd += trip.gps_trace.distance[i]
                 ct += trip.gps_trace.traveled_time[i]
                 if ct > par_time and cd > min_distance or cd > max_distance:

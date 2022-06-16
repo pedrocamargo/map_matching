@@ -1,7 +1,10 @@
 import os, sys
 import pandas as pd
 from map_matching import *
-
+from map_matching import map_match
+from map_matching.parameters import load_parameters
+from map_matching.trip import Trip
+from map_matching.network import Network
 out_folder = load_parameters('output_folder')
 
 single_trip = Trip()
@@ -39,4 +42,4 @@ net.load_nodes('example_data/MPO_DATA_EXAMPLE/Peoria_stops_wgs.shp', 'ID')
 
 map_match(single_trip, net)
 
-print single_trip.path.to_csv(os.path.join(out_folder, 'result.csv'), index=False)
+print(single_trip.path.to_csv(os.path.join(out_folder, 'result.csv'), index=False))

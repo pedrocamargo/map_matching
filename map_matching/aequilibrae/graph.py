@@ -22,7 +22,7 @@ print VERSION
 
 import numpy as np
 import csv
-import cPickle
+import pickle
 from datetime import datetime
 import uuid
 
@@ -238,13 +238,13 @@ class Graph:
         # determining types.  We analyze the first ten links of the network to determine type of each field
         all_types = []
         for k in range(len(data[0])):
-            all_types.append(long)
+            all_types.append(int)
         for i in range(10):
             for k in range(len(data[i])):
                 all_types[k] = self.__determine_types__(data[i][k], all_types[k])
 
         for k in range(len(all_types)):
-            if all_types[k] == long:
+            if all_types[k] == int:
                 all_types[k] = np.int32
             elif all_types[k] == float:
                 all_types[k] = np.float64
@@ -295,13 +295,13 @@ class Graph:
         # determining types.  We analyze the first ten links of the network to determine type of each field
         all_types = []
         for k in range(len(data[0])):
-            all_types.append(long)
+            all_types.append(int)
         for i in range(10):
             for k in range(len(data[i])):
                 all_types[k] = self.__determine_types__(data[i][k], all_types[k])
 
         for k in range(len(all_types)):
-            if all_types[k] == long:
+            if all_types[k] == int:
                 all_types[k] = np.int32
             elif all_types[k] == float:
                 all_types[k] = np.float64
@@ -336,15 +336,15 @@ class Graph:
         a = self.graph['a_node'][0]
         p = 0
         k = 0
-        for i in xrange(1, self.num_links):
+        for i in range(1, self.num_links):
             if a != self.graph['a_node'][i]:
-                for j in xrange(p, self.graph['a_node'][i]):
+                for j in range(p, self.graph['a_node'][i]):
                     self.fs[j + 1] = k
                 p = a
                 a = self.graph['a_node'][i]
                 k = i
 
-        for j in xrange(p, self.graph['a_node'][i-1]):
+        for j in range(p, self.graph['a_node'][i-1]):
             self.fs[j + 1] = k
 
         self.fs[-1] = self.num_links
@@ -425,9 +425,9 @@ class Graph:
                 a = self.graph['a_node'][0]
                 p = 0
                 k = 0
-                for i in xrange(1, self.num_links):
+                for i in range(1, self.num_links):
                     if a != self.graph['a_node'][i]:
-                        for j in xrange(p, self.graph['a_node'][i]):
+                        for j in range(p, self.graph['a_node'][i]):
                             self.fs[j + 1] = k
                         p = a
                         a = self.graph['a_node'][i]
@@ -452,7 +452,7 @@ class Graph:
             if self.graph[cost_field].dtype == np.float64:
                 self.cost = self.graph[cost_field]
             else:
-                print 'Cost field with wrong type. Converting to float64'
+                print('Cost field with wrong type. Converting to float64')
                 self.cost = self.graph[cost_field].astype(np.float64)
 
         if self.cost is not None:
@@ -465,7 +465,7 @@ class Graph:
                 skim_fields = s
         else:
             if skim_fields:
-                print 'Before setting skims, you need to set the cost field'
+                print('Before setting skims, you need to set the cost field')
 
         t = False
         for i in skim_fields:
@@ -475,7 +475,7 @@ class Graph:
         self.skims = np.zeros((self.num_links, len(skim_fields)), np.float64)
 
         if t:
-            print 'Some skim field with wrong type. Converting to float64'
+            print('Some skim field with wrong type. Converting to float64')
             for i, j in enumerate(skim_fields):
                 self.skims[:, i] = self.graph[j].astype(np.float64)
         else:
@@ -502,10 +502,10 @@ class Graph:
         mygraph['network_ok'] = self.network_ok
         mygraph['type_loaded'] = self.type_loaded
 
-        cPickle.dump(mygraph, open(filename, 'wb'))
+        pickle.dump(mygraph, open(filename, 'wb'))
 
     def load_from_disk(self, filename):
-        mygraph = cPickle.load(open(filename, 'rb'))
+        mygraph = pickle.load(open(filename, 'rb'))
         self.description = mygraph['description']
         self.num_links = mygraph['num_links']
         self.num_nodes = mygraph['num_nodes']
@@ -605,7 +605,7 @@ class Graph:
         nt = type(new_type)
         def_type = None
         if nt == int or nt == int:
-            def_type = long
+            def_type = int
             if current_type == float:
                 def_type == float
             elif current_type == str:

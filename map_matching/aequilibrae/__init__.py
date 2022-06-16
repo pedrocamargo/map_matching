@@ -17,6 +17,4 @@
 import sys
 sys.dont_write_bytecode = True
 
-from graph import Graph        # We import the graph
-from path_results import PathResults
-from AoN import path_computation
+

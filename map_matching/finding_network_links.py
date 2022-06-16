@@ -9,12 +9,9 @@
 # Licence:     APACHE 2.0
 #-------------------------------------------------------------------------------
 
-import glob
-import ntpath
-import pandas as pd
-from shapely.geometry import LineString, Point  # Pip install shapely
 
-from parameters import load_parameters
+from shapely.geometry import Point  # Pip install shapely
+
 
 # Somewhat based on http://rexdouglass.com/fast-spatial-joins-in-python-with-a-spatial-index/
 

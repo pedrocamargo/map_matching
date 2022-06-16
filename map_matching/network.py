@@ -1,14 +1,16 @@
+
+
 import numpy as np
 import pandas as pd
 import shapefile  # pip install pyshp
 from rtree import index  # Wheel from Chris Gohlke's  website
-import sys
+
 import fiona
 from shapely.geometry import shape
 import os
-from aequilibrae import Graph
+from .aequilibrae.graph import Graph
 from shapely.ops import cascaded_union
-from linebearing import compute_line_bearing
+from .linebearing import compute_line_bearing
 from shutil import copyfile
 
 # writing to SQLITE comes largely from http://gis.stackexchange.com/questions/141818/insert-geopandas-geodataframe-into-spatialite-database
@@ -51,7 +53,7 @@ class Network:
     def load_network(self, network_file, network_fields):
         self.network_fields = network_fields
     # First we load the graph itself
-        print 'Creating graph from shapefile'
+        print('Creating graph from shapefile')
         link_id = network_fields['link_id']
         direction = network_fields['direction']
         cost_field = network_fields['cost']
@@ -88,12 +90,12 @@ class Network:
         dirs = []
         ids = []
 
-        print 'Creating network spatial index'
+        print('Creating network spatial index')
 
         for feature in source:
             geom = shape(feature['geometry'])
             properties = feature["properties"]
-            properties_lower = {k.lower(): v for k, v in properties.items()}
+            properties_lower = {k.lower(): v for k, v in list(properties.items())}
 
             i_d = int(properties_lower[link_id.lower()])
             direc = int(properties_lower[direction.lower()])
@@ -117,7 +119,7 @@ class Network:
                 w.poly(parts=[[[x, y] for x, y in zip(x, y)]])
                 w.record(i_d)
             except:
-                print '     ','Link', i_d, 'could not have its buffer computed'
+                print('     ','Link', i_d, 'could not have its buffer computed')
 
 
             # Builds the dataframe
@@ -148,7 +150,7 @@ class Network:
 
 
         self.links_df = D
-        print '     LINKS spatial index created successfully'
+        print('     LINKS spatial index created successfully')
 
     def reset_costs(self):
         cost_field = self.network_fields['cost']
@@ -163,7 +165,7 @@ class Network:
         dirs = []
         ids = []
         self.nodes = []
-        print 'Creating nodes spatial index'
+        print('Creating nodes spatial index')
         for feature in source:
             geom = shape(feature['geometry'])
             i_d = int(feature["properties"][id_field])
@@ -171,5 +173,5 @@ class Network:
             x, y = geom.centroid.coords.xy
             self.nodes.append([i_d, float(x[0]), float(y[0])])
         self.nodes = pd.DataFrame(self.nodes, columns = ['ID', 'X', 'Y']).set_index(['ID'])
-        print '     NODES spatial index created successfully'
+        print('     NODES spatial index created successfully')
 

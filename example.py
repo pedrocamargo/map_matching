@@ -1,7 +1,12 @@
-import os, sys
+import os
 #os.chdir('/home/pedro/SourceCode/map_matching')
 import pandas as pd
-from map_matching import *
+
+from map_matching import map_match
+from map_matching.parameters import load_parameters
+from map_matching.trip import Trip
+from map_matching.network import Network
+
 
 out_folder = load_parameters('output_folder')
 
@@ -39,4 +44,4 @@ net.load_nodes('example_data/FAF_Nodes.shp', 'ID')
 
 map_match(trips, net)
 
-print trips.path.to_csv(os.path.join(out_folder, 'result.csv'), index=False )
+print(trips.path.to_csv(os.path.join(out_folder, 'result.csv'), index=False ))

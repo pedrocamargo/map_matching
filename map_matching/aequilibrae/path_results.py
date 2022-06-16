@@ -50,4 +50,4 @@ class PathResults:
             self.milepost = None
 
         else:
-            print 'Exception: Path results object was not yet prepared/initialized'
+            print('Exception: Path results object was not yet prepared/initialized')

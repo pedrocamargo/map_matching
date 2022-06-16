@@ -1,3 +1,8 @@
+
+
+from .parameters import load_parameters
+
+
 __author__  =  'pcamargo'
 
 from datetime import timedelta
@@ -5,8 +10,9 @@ import numpy as np
 import pandas as pd
 from rtree import index  # Wheel from Chris Gohlke's  website
 
-from map_matching.aequilibrae import Graph, PathResults, path_computation
-from geopy.distance import vincenty as gc
+from map_matching.aequilibrae.path_results import PathResults
+from map_matching.aequilibrae.setup_Assignment import *
+from geopy.distance import geodesic as gc
 
 def find_route(trip, network):
     vehicle_trace = trip.gps_trace
@@ -162,10 +168,10 @@ def InterpolateTS(arrives_tstamps, leaves_tstamps, pathnodes, all_links,  networ
         consistent = True
         for i in range(len(pathnodes)-1):
             o = pathnodes[i]
-            if o in leaves_tstamps.keys():
-                for j in xrange(i + 1, len(pathnodes)):
+            if o in list(leaves_tstamps.keys()):
+                for j in range(i + 1, len(pathnodes)):
                     d = pathnodes[j]
-                    if d in arrives_tstamps.keys():
+                    if d in list(arrives_tstamps.keys()):
                         if leaves_tstamps[o] > arrives_tstamps[d]:
                             if i > 0:
                                 leaves_tstamps.pop(o, None)
@@ -181,7 +187,7 @@ def InterpolateTS(arrives_tstamps, leaves_tstamps, pathnodes, all_links,  networ
     while i < len(pathnodes)-2:
         j = i + 1
         mp = network.interpolation_cost[all_links[j - 1]]
-        while pathnodes[j] not in arrives_tstamps.keys():
+        while pathnodes[j] not in list(arrives_tstamps.keys()):
             mp += network.interpolation_cost[all_links[j]]
             j += 1
         
@@ -192,7 +198,7 @@ def InterpolateTS(arrives_tstamps, leaves_tstamps, pathnodes, all_links,  networ
                 del leaves_tstamps
                 break
             mp2 = 0
-            for k in xrange(i + 1, j):
+            for k in range(i + 1, j):
                 mp2 += network.interpolation_cost[all_links[k - 1]]
                 j_time = leaves_tstamps[pathnodes[i]] + timedelta(seconds=time_diff*mp2/mp)
                 arrives_tstamps[pathnodes[k]] = j_time
