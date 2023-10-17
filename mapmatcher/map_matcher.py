@@ -23,6 +23,9 @@ class MapMatcher:
         self.network: Network()
         self.trips = []  # type: List[Trip]
         self.output_folder = None
+        self.__exogeous_stops = False
+        self.__traces: gpd.GeoDataFrame
+        self.__stops: Optional[gpd.GeoDataFrame] = None
         self.parameters = Parameters()
 
     def set_output_folder(self, output_folder: str):
@@ -48,14 +51,28 @@ class MapMatcher:
                 traces, geometry=gpd.points_from_xy(traces.longitude, traces.latitude), crs="EPSG:4326"
             )
 
+        mandatory_fields = ["trace_id", "ping_id", "latitude", "longitude", "timestamp"]
+        for fld in mandatory_fields:
+            if fld not in traces:
+                raise ValueError(f"Field {fld} is mising from the data")
+
+        self.__traces = traces.sort_values(by=["trace_id", "timestamp"])
+
     def load_stops(self, stops: Union[gpd.GeoDataFrame, PathLike], data_dictionary: Optional[dict] = None):
         if isinstance(stops, pd.GeoDataFrame):
-            stops = stops.to_crs(4326)
+            self.__stops = stops.to_crs(4326)
         else:
             stops = pd.read_csv(stops)
-            stops = gpd.GeoDataFrame(
+            self.__stops = gpd.GeoDataFrame(
                 stops, geometry=gpd.points_from_xy(stops.longitude, stops.latitude), crs="EPSG:4326"
             )
+        self.__exogeous_stops = True
+
+    def _build_trips(self):
+        self.trips.clear()
+        for trace_id, gdf in self.__traces.groupby(["trace_id"]):
+            stops = None if self.__exogeous_stops else self.__stops[self.__stops.trace_id == trace_id]
+            self.trips.append(Trip(self.parameters, gps_trace=gdf, stops=stops))
 
     def execute(self):
         self.find_stops()

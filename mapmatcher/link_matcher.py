@@ -1,6 +1,7 @@
 import pandas as pd
 from shapely.geometry import Point
 
+
 def find_network_links(self):
     veh_speed = -1
     veh_azimuth = -1

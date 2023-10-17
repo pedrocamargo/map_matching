@@ -1,3 +1,8 @@
+import pandas as pd
+from aequilibrae.paths import PathResults
+import numpy as np
+
+
 def find_route(self):
     vehicle_trace = self.trip.gps_trace
     stops = self.trip.stops
@@ -62,7 +67,7 @@ def find_route(self):
         if origin != destination:
             arrives_tstamps = {}
             leaves_tstamps = {}
-            path_computation(origin, destination, self.network.graph, results)
+            results.compute_path(origin=origin, destination=destination)
             if results.path is not None:
                 # Now we build a spatial index with the subset of pings in the truck trace between the origin and destination
                 ping_subset = vehicle_trace[
@@ -101,9 +106,7 @@ def find_route(self):
                 leaves_tstamps[origin] = stop_sequence[i][1] + timedelta(seconds=int(stop_sequence[i][2]))
 
                 arrives_tstamps[destination] = stop_sequence[i + 1][1]
-                leaves_tstamps[destination] = stop_sequence[i + 1][1] + timedelta(
-                    seconds=int(stop_sequence[i + 1][2])
-                )
+                leaves_tstamps[destination] = stop_sequence[i + 1][1] + timedelta(seconds=int(stop_sequence[i + 1][2]))
 
                 self.InterpolateTS(arrives_tstamps, leaves_tstamps, results.path_nodes, results.path.copy())
 
@@ -169,4 +172,3 @@ def find_route(self):
     self.trip.path = df
     # We reset the graph costs
     self.network.graph.cost = self.network.orig_cost.copy()
-
