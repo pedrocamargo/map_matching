@@ -70,7 +70,7 @@ exclude = ["tests"]
 namespaces = true
 
 [tool.setuptools.dynamic]
-version = { attr = "SVTrip.release_version" }
+version = { attr = "mapmatcher.__version__" }
 
 [tool.black]
 line-length = 120
