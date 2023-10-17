@@ -1,5 +1,7 @@
+from typing import Optional
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 from rtree import index  # Wheel from Chris Gohlke's  website
 import sys
 import fiona
@@ -9,16 +11,16 @@ from aequilibrae import Graph
 from shapely.ops import cascaded_union
 from linebearing import compute_line_bearing
 from shutil import copyfile
+
 # writing to SQLITE comes largely from http://gis.stackexchange.com/questions/141818/insert-geopandas-geodataframe-into-spatialite-database
 
 
-class Network():
-    def __init__(self):
-
+class Network:
+    def __init__(self, graph: Graph, links: gpd.GeoDataFrame, nodes: Optional[gpd.GeoDataFrame] = None):
         # Creates the properties for the outputs
-        self.links = None
-        self.nodes = None
-        self.graph = Graph()
+        self.links = links
+        self.nodes = nodes
+        self.graph = graph
         self.buffer_resolution = 5
         self.buffer_size = None
         self.azimuth_tolerance = None
@@ -43,28 +45,27 @@ class Network():
         self.has_azimuth = False
 
     def set_geometry_parameters(self, parameters):
-        self.buffer_size = parameters['buffer size']
-        self.azimuth_tolerance = parameters['azimuth tolerance']
-
+        self.buffer_size = parameters["buffer size"]
+        self.azimuth_tolerance = parameters["azimuth tolerance"]
 
     def create_buffers(self, network_file, network_fields):
-        link_id = network_fields['link_id']
-        direction = network_fields['direction']
+        link_id = network_fields["link_id"]
+        direction = network_fields["direction"]
 
-    # Now we load the layer as geographic objects for the actual analysis
-        source = fiona.open(network_file, 'r')
+        # Now we load the layer as geographic objects for the actual analysis
+        source = fiona.open(network_file, "r")
 
-        projection_file = network_file[:-3] + 'prj'
+        projection_file = network_file[:-3] + "prj"
         w = shapefile.Writer(shapefile.POLYGON)
-        w.field(link_id, 'I', '40')
+        w.field(link_id, "I", "40")
         azims = []
         dirs = []
         ids = []
 
-        print 'Creating network spatial index'
+        print("Creating network spatial index")
 
         for feature in source:
-            geom = shape(feature['geometry'])
+            geom = shape(feature["geometry"])
             properties = feature["properties"]
             properties_lower = {k.lower(): v for k, v in properties.items()}
 
@@ -73,11 +74,13 @@ class Network():
             link_buffer = cascaded_union(geom.buffer(self.buffer_size, resolution=self.buffer_resolution))
             self.idx_links.insert(i_d, link_buffer.bounds)
 
-            if network_fields['azimuth']:
-                if network_fields['azimuth'] == "AUTO":
-                    azim = compute_line_bearing(feature['geometry']['coordinates'][0], feature['geometry']['coordinates'][-1])
+            if network_fields["azimuth"]:
+                if network_fields["azimuth"] == "AUTO":
+                    azim = compute_line_bearing(
+                        feature["geometry"]["coordinates"][0], feature["geometry"]["coordinates"][-1]
+                    )
                 else:
-                    azim = properties_lower[network_fields['azimuth'].lower()]
+                    azim = properties_lower[network_fields["azimuth"].lower()]
             else:
                 azim = -1
 
@@ -90,59 +93,53 @@ class Network():
                 w.poly(parts=[[[x, y] for x, y in zip(x, y)]])
                 w.record(i_d)
             except:
-                print '     ','Link', i_d, 'could not have its buffer computed'
-
+                print("     ", "Link", i_d, "could not have its buffer computed")
 
             # Builds the dataframe
-        d = {'ID': ids,
-             'azim': azims,
-             'dir': dirs}
+        d = {"ID": ids, "azim": azims, "dir": dirs}
         D = pd.DataFrame(d)
-        D = D.set_index('ID')
-        D['graph_ab'] = -1
-        D['graph_ba'] = -1
+        D = D.set_index("ID")
+        D["graph_ab"] = -1
+        D["graph_ba"] = -1
         del d
 
-        buffer_name = 'BUFFERS_USED_IN_ANALYSIS'
+        buffer_name = "BUFFERS_USED_IN_ANALYSIS"
         if os.path.isfile(projection_file):
-            copyfile(projection_file, os.path.join(self.output_folder, buffer_name + '.prj'))
-        w.save(os.path.join(self.output_folder, buffer_name + '.SHP'))
+            copyfile(projection_file, os.path.join(self.output_folder, buffer_name + ".prj"))
+        w.save(os.path.join(self.output_folder, buffer_name + ".SHP"))
         del w
 
         # Brings the graph info for the Dataframe
         for i in range(self.graph.num_links):
-            link_id = self.graph.graph['link_id'][i]
-            direc = self.graph.graph['direction'][i]
-            graph_id = self.graph.graph['id'][i]
+            link_id = self.graph.graph["link_id"][i]
+            direc = self.graph.graph["direction"][i]
+            graph_id = self.graph.graph["id"][i]
             if direc == -1:
-                D.at[link_id, 'graph_ba'] = graph_id
+                D.at[link_id, "graph_ba"] = graph_id
             else:
-                D.at[link_id, 'graph_ab'] = graph_id
-
+                D.at[link_id, "graph_ab"] = graph_id
 
         self.links_df = D
-        print '     LINKS spatial index created successfully'
+        print("     LINKS spatial index created successfully")
 
     def reset_costs(self):
-        cost_field = self.network_fields['cost']
+        cost_field = self.network_fields["cost"]
         self.graph.cost = self.graph.graph[cost_field].astype(np.float64)
 
     def load_nodes(self, nodes_file, id_field):
-
         # Now we load the layer as geographic objects for the actual analysis
-        source = fiona.open(nodes_file, 'r')
+        source = fiona.open(nodes_file, "r")
 
         azims = []
         dirs = []
         ids = []
         self.nodes = []
-        print 'Creating nodes spatial index'
+        print("Creating nodes spatial index")
         for feature in source:
-            geom = shape(feature['geometry'])
+            geom = shape(feature["geometry"])
             i_d = int(feature["properties"][id_field])
             self.idx_nodes.insert(i_d, geom.bounds)
             x, y = geom.centroid.coords.xy
             self.nodes.append([i_d, float(x[0]), float(y[0])])
-        self.nodes = pd.DataFrame(self.nodes, columns = ['ID', 'X', 'Y']).set_index(['ID'])
-        print '     NODES spatial index created successfully'
-
+        self.nodes = pd.DataFrame(self.nodes, columns=["ID", "X", "Y"]).set_index(["ID"])
+        print("     NODES spatial index created successfully")

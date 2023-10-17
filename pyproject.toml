@@ -34,7 +34,7 @@ linting = [
     'ruff'
 ]
 formatting = [
-    'black'
+    'black', 'isort'
 ]
 docs = [
     'aequilibrae',
@@ -76,3 +76,10 @@ version = { attr = "mapmatcher.__version__" }
 line-length = 120
 target-version = ['py38', 'py39', 'py310', 'py311']
 include = '\.pyi?$'
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+line_length = 120
+profile = "black"

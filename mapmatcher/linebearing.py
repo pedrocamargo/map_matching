@@ -1,8 +1,8 @@
 # Based on https://gist.github.com/jeromer/2005586
 import math
 
-def compute_line_bearing(pointA, pointB):
 
+def compute_line_bearing(pointA, pointB):
     latA = math.radians(pointA[0])
     latB = math.radians(pointB[0])
 
