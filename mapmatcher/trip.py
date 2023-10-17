@@ -1,20 +1,24 @@
-import pandas as pd
+from .parameters import Parameters
+import geopandas as gpd
 import numpy as np
 from geopy.distance import great_circle
 
 
 class Trip:
-    def __init__(self):
+    def __init__(self, parameters: Parameters):
         # Fields necessary for running the algorithm
-        self.mandatory_fields = ["ping_id", "latitude", "longitude", "timestamp"]
-        self.optional_fields = ["azimuth", "speed"]
+        self.__mandatory_fields = ["ping_id", "latitude", "longitude", "timestamp"]
+        self.__optional_fields = ["azimuth", "speed"]
         self.all_fields = self.mandatory_fields + self.optional_fields
+        self.parameters = parameters
+
+        self.trace: gpd.GeoDataFrame
+        self.trace: gpd.GeoDataFrame
 
         # Creates the properties for the outputs
         self.gps_trace = None
         self.used_links = None
         self.graph_links = None
-        self.stops = None
         self.error = None
         self.path = None
 
@@ -47,13 +51,6 @@ class Trip:
             for i in self.stops_algorithms_available:
                 t += i + ","
             raise Exception("Bad algorithm for finding stops. Available algorithms are " + t[0:-1])
-
-    # The stop criteria needs to be a dictionary
-    def set_stops_parameters(self, criteria):
-        self.stops_parameters = criteria
-
-    def set_parameters(self):
-        pass
 
     # Loading the data from a csv file
     def populate_from_csv(self, csv_file, fields_dictionary=False):
@@ -151,18 +148,6 @@ class Trip:
         p2 = [np.min(self.gps_trace["latitude"]), np.min(self.gps_trace["longitude"])]
         if self.gc(p1[1], p1[0], p2[1], p2[0]) < self.data_quality_parameters["minimum_coverage"]:
             self.error = "Vehicle covers only", self.gc(p1[1], p1[0], p2[1], p2[0]), "km"
-
-    def reset(self):
-        # Creates the dataframe for the GPS trace
-        data = {x: [] for x in self.all_fields}
-        self.gps_trace = pd.DataFrame(data)
-
-        # Creates the properties for the outputs
-        self.used_links = None
-        self.graph_links = None
-        self.stops = None
-        self.error = None
-        self.path = None
 
     # Great circle distance function
     @staticmethod

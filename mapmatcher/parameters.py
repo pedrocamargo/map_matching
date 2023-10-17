@@ -44,7 +44,7 @@ class Parameters:
     geoprocessing = geoprocessing()
     data_quality = data_quality()
     stop_algorithm = "delivery_stop"
-    algorithm_parameters = {"delivery_stop": delivery_stop(), "maximum_space": maximum_space()}
+    algorithm_parameters = {"delivery_stop": delivery_stop(), "maximum_space": maximum_space(), "exogenous": None}
     map_matching = map_matching()
 
 
