@@ -10,9 +10,8 @@ warnings.filterwarnings("ignore")
 from shapely.geometry import LineString, Point  # Pip install shapely
 
 from datetime import timedelta
-from rtree import index  # Wheel from Chris Gohlke's  website
 
-from map_matching.aequilibrae import PathResults, path_computation
+from aequilibrae.paths import PathResults, path_computation
 from geopy.distance import vincenty as gc
 
 

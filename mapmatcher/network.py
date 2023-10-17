@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import shapefile  # pip install pyshp
 from rtree import index  # Wheel from Chris Gohlke's  website
 import sys
 import fiona
@@ -47,31 +46,6 @@ class Network():
         self.buffer_size = parameters['buffer size']
         self.azimuth_tolerance = parameters['azimuth tolerance']
 
-    def load_network(self, network_file, network_fields):
-        self.network_fields = network_fields
-    # First we load the graph itself
-        print 'Creating graph from shapefile'
-        link_id = network_fields['link_id']
-        direction = network_fields['direction']
-        cost_field = network_fields['cost']
-        skims=[]
-        if network_fields['interpolation'] != cost_field:
-            skims.append(network_fields['interpolation'])
-
-        self.graph.create_from_geography(network_file, link_id, direction, cost_field, skims)
-        self.graph.cost = self.graph.graph[cost_field.lower()].astype(np.float64)
-        self.orig_cost = np.copy(self.graph.cost)
-        if network_fields['interpolation'] == cost_field:
-            self.interpolation_cost = self.orig_cost
-        else:
-            self.interpolation_cost = self.graph.skims[:, 0]
-
-        self.graph.set_graph(cost_field=cost_field.lower(), skim_fields=[network_fields['interpolation'].lower()])
-        if not os.path.exists(self.output_folder):
-            os.makedirs(self.output_folder)
-        self.graph.save_to_disk(os.path.join(self.output_folder, 'GRAPH USED IN ANALYSIS.aeg'))
-
-        self.create_buffers(network_file, network_fields)
 
     def create_buffers(self, network_file, network_fields):
         link_id = network_fields['link_id']
