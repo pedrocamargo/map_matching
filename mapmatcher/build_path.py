@@ -1,6 +1,6 @@
+import numpy as np
 import pandas as pd
 from aequilibrae.paths import PathResults
-import numpy as np
 
 
 def find_route(self):

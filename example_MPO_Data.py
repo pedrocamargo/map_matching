@@ -1,6 +1,7 @@
-import os, sys
+import os
+
 import pandas as pd
-import numpy as np
+
 from map_matching import *
 
 out_folder = load_parameters("output_folder")

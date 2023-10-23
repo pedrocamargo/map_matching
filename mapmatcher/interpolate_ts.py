@@ -1,3 +1,6 @@
+from datetime import timedelta
+
+
 def InterpolateTS(self, arrives_tstamps, leaves_tstamps, pathnodes, all_links):
     consistent = False
     while not consistent:

@@ -1,27 +1,22 @@
-from typing import Optional, List, Union
-
 from os import PathLike
-from .parameters import Parameters
+from typing import Optional, Union, List
+
+import geopandas as gpd
+import pandas as pd
+from aequilibrae.paths import Graph
 from network import Network
 from trip import Trip
-from aequilibrae.paths import Graph
-import pandas as pd
-import numpy as np
-import geopandas as gpd
 
-from geopy.distance import great_circle
-from shapely.geometry import LineString, Point
-
-from datetime import timedelta
-
-from aequilibrae.paths import PathResults, path_computation
-from geopy.distance import vincenty as gc
+from .parameters import Parameters
 
 
 class MapMatcher:
+    __mandatory_fields = ["trace_id", "ping_id", "latitude", "longitude", "timestamp"]
+
     def __init__(self):
+        self.__orig_crs = 4326
         self.network: Network()
-        self.trips = []  # type: List[Trip]
+        self.trips: List[Trip] = []
         self.output_folder = None
         self.__exogeous_stops = False
         self.__traces: gpd.GeoDataFrame
@@ -40,25 +35,26 @@ class MapMatcher:
     def load_network(self, graph: Graph, links: gpd.GeoDataFrame, nodes: Optional[gpd.GeoDataFrame] = None):
         self.network = Network(graph=graph, links=links, nodes=nodes)
 
-    def load_gps_pings(self, gps_traces: Union[gpd.GeoDataFrame, PathLike]):
-        """Coordinate system for GPS pings must ALWAYS be 4326"""
+    def load_gps_traces(self, gps_traces: Union[gpd.GeoDataFrame, PathLike]):
+        f"""Coordinate system for GPS pings must ALWAYS be 4326 when loading from CSV.
+        Required fields are:  {self.__mandatory_fields}"""
 
         if isinstance(gps_traces, pd.GeoDataFrame):
-            traces = gps_traces.to_crs(4326)
+            self.__orig_crs = traces.crs
+            traces = gps_traces
         else:
             traces = pd.read_csv(gps_traces)
             traces = gpd.GeoDataFrame(
                 traces, geometry=gpd.points_from_xy(traces.longitude, traces.latitude), crs="EPSG:4326"
             )
 
-        mandatory_fields = ["trace_id", "ping_id", "latitude", "longitude", "timestamp"]
-        for fld in mandatory_fields:
+        for fld in self.__mandatory_fields:
             if fld not in traces:
                 raise ValueError(f"Field {fld} is mising from the data")
 
-        self.__traces = traces.sort_values(by=["trace_id", "timestamp"])
+        self.__traces = traces.to_crs(3857).sort_values(by=["trace_id", "timestamp"])
 
-    def load_stops(self, stops: Union[gpd.GeoDataFrame, PathLike], data_dictionary: Optional[dict] = None):
+    def load_stops(self, stops: Union[gpd.GeoDataFrame, PathLike]):
         if isinstance(stops, pd.GeoDataFrame):
             self.__stops = stops.to_crs(4326)
         else:
@@ -84,19 +80,13 @@ class MapMatcher:
 
     @staticmethod
     def reverse_azim(azim):
-        if azim > 180:
-            return azim - 180
-        else:
-            return azim + 180
+        return azim - 180 if azim > 180 else azim + 180
 
     @staticmethod
     def check_if_inside(azimuth, polygon_azimuth, tolerance):
-        inside = False
-
         # If checking the tolerance interval will make the angle bleed the [0,360] interval, we have to fix it
 
         # In case the angle is too big
-
         if polygon_azimuth + tolerance > 360:
             if polygon_azimuth - tolerance > azimuth:
                 azimuth += 360
@@ -108,17 +98,10 @@ class MapMatcher:
                 azimuth += 360
 
         if polygon_azimuth - tolerance <= azimuth <= polygon_azimuth + tolerance:
-            inside = True
+            return True
 
         # Several data points do NOT have an azimuth associated, so we consider the possibility that all the links are valid
         if azimuth == 0:
-            inside = True
+            return True
 
-        return inside
-
-    # Great circle distance function
-    @staticmethod
-    def gc(a, b, c, d):
-        p1 = (b, a)
-        p2 = (d, c)
-        return great_circle(p1, p2).kilometers
+        return False

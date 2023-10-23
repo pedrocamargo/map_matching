@@ -1,7 +1,8 @@
-import os, sys
+import os
 
 # os.chdir('/home/pedro/SourceCode/map_matching')
 import pandas as pd
+
 from map_matching import *
 
 out_folder = load_parameters("output_folder")

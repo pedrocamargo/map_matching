@@ -3,7 +3,8 @@ import dataclasses
 
 @dataclasses.dataclass
 class geoprocessing:
-    buffer: float = 50  # Buffer around the links to capture links likely used. Unit is meters
+    buffer_size: float = 50  # Buffer around the links to capture links likely used. Unit is meters
+    buffer_resolution: int = 5
     azimuth_tolerance: float = 22.5  # In case the network and the GPS data have azimuths, this is the tolerance to
     # be used to define if a GPS ping could have used a certain link
 
@@ -13,7 +14,8 @@ class data_quality:
     max_speed: float = 130  # in kmph
     max_speed_time: float = 120  # in seconds   --> time that the truck needs to be above the speed limit to be scraped
     minimum_pings: int = 20  # Minimum number of pings that the vehicle needs to have to be considered valid
-    minimum_coverage: float = 2  # Minimum diagonal of the Bounding box (km) defined by the GPS pingsin the trace
+    minimum_coverage: float = 2  # Minimum diagonal of the Bounding box (km) defined by the GPS pings in the trace
+    maximum_jittery: float = 0.001 # Maximum distance for which a vehicle can move within the same timestamp (in km)
 
 
 @dataclasses.dataclass
