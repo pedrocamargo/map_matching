@@ -16,9 +16,36 @@ def gps_trace() -> gpd.GeoDataFrame:
     return gpd.GeoDataFrame(df, geometry=geometry)
 
 
-def test_trip(gps_trace):
-    trp = Trip(gps_trace=gps_trace, parameters=Parameters())
+@pytest.fixture
+def param() -> Parameters:
+    par = Parameters()
+    par.data_quality.maximum_jittery = 20000
+    par.data_quality.max_speed = 41
+    return par
+
+
+def test_trip(gps_trace, param):
+    trp = Trip(gps_trace=gps_trace, parameters=param, network=None)
     assert trp.has_heading
-    assert trp.has_speed
-    print(trp.trace.dist.max())
-    print(trp.trace.traveled_time.max())
+    assert not trp.has_error
+
+
+def test_fail_on_jitter(gps_trace, param):
+    param.data_quality.maximum_jittery = 0.01
+    trp = Trip(gps_trace=gps_trace, parameters=param, network=None)
+    assert trp.has_error
+    assert "jitter" in trp._error_type
+
+
+def test_fail_on_speed_time(gps_trace, param):
+    param.data_quality.max_speed_time = 0
+    trp = Trip(gps_trace=gps_trace, parameters=param, network=None)
+    assert trp.has_error
+    assert "surpassed" in trp._error_type
+
+
+def test_fail_on_speed_time2(gps_trace, param):
+    param.data_quality.max_speed = 120 / 3.6
+    trp = Trip(gps_trace=gps_trace, parameters=param, network=None)
+    assert trp.has_error
+    assert "surpassed" in trp._error_type

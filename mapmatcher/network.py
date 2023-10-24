@@ -23,24 +23,13 @@ class Network:
         self.links = links
         self.nodes = nodes
         self.graph = graph
-        self.heading_tolerance = None
-        self.buffers = {}
-        self.links_df = None
-        self.network_fields = None
-        self.orig_cost = None
-        self.interpolation_cost = None
-        self.output_folder = None
+        self._speed_field = ""
 
-        # Fields necessary for running the algorithm
-        self.mandatory_fields = ["trip_id", "ping_id", "latitude", "longitude", "timestamp"]
-        self.optional_fields = ["heading", "speed"]
-        self.all_fields = self.mandatory_fields + self.optional_fields
+    @property
+    def has_speed(self) -> bool:
+        return len(self._speed_field) > 0
 
-        # Indicators to show if we have the optional fields in the data
-        self.has_speed = False
-        self.has_heading = False
-
-        pgeo = parameters.geoprocessing
-        crs = pgeo.projected_crs
-        buffers = self.links.to_crs(crs).buffer(distance=pgeo.buffer_size, resolution=pgeo.buffer_resolution)
-        self.buffers = buffers.to_crs(4326)
+    def set_speed_field(self, speed_field: str):
+        if speed_field not in self.links:
+            raise ValueError("Speed field NOT in the links table")
+        self._speed_field = speed_field

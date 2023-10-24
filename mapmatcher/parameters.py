@@ -4,10 +4,6 @@ import dataclasses
 @dataclasses.dataclass
 class geoprocessing:
     projected_crs: int = 3857  # We require a projected CRS to make sure all distance computations are correct
-    buffer_size: float = 50  # Buffer around the links to capture links likely used. Unit is meters
-    buffer_resolution: int = 5
-    heading_tolerance: float = 22.5  # In case the network and the GPS data have headings, this is the tolerance to
-    # be used to define if a GPS ping could have used a certain link
 
 
 @dataclasses.dataclass
@@ -17,6 +13,15 @@ class data_quality:
     minimum_pings: int = 20  # Minimum number of pings that the vehicle needs to have to be considered valid
     minimum_coverage: float = 2000  # Minimum diagonal of the Bounding box (m) defined by the GPS pings in the trace
     maximum_jittery: float = 1  # Maximum distance for which a vehicle can move within the same timestamp (m)
+
+
+@dataclasses.dataclass
+class map_matching:
+    # map matching related parameters
+    cost_discount: float = 20  # possibly used link cost reduction ratio
+    buffer_size: float = 50  # Buffer around the links to capture links likely used. Unit is meters
+    heading_tolerance: float = 22.5  # In case the network and the GPS data have headings, this is the tolerance to
+    # be used to define if a GPS ping could have used a certain link
 
 
 @dataclasses.dataclass
@@ -34,12 +39,6 @@ class delivery_stop:  # Time in seconds
     min_time_stopped: float = 300  # 5*60 in seconds   --> minimum stopped time to be considered
     max_time_stopped: float = 14400  # 4*60*60 in seconds   --> maximum stopped time to be considered
     max_stop_coverage: float = 800  # in m
-
-
-@dataclasses.dataclass
-class map_matching:
-    # map matching related parameters
-    cost_discount: float = 20  # possibly used link cost reduction ratio
 
 
 @dataclasses.dataclass
