@@ -43,7 +43,7 @@ I only implemented a method to import data from CSV. However, it is easy to add 
 
 
 ##### The optional fields that can be also used in the algorithm are:
-* **azimuth** (float): Direction (degrees [0,359]) the vehicle was heading when ping was registered
+* **heading** (float): Direction (degrees [0,359]) the vehicle was heading when ping was registered
 * **speed** (float): Speed the vehicle was travelling at when ping happened
 
 ##### Parallelization
@@ -56,7 +56,7 @@ However, the path computation part of the algorithm DOES release the GIL, so thr
 ## 1. The Trip class
   A trip is the path a vehicle did that needs to be map-matched.
   It has the following properties:
-  1. **GPS trace**: The input data (**Mandatory fields**: trip_id, ping_id, latitude, longitude, timestamp **Optional fields**: azimuth, speed)
+  1. **GPS trace**: The input data (**Mandatory fields**: trip_id, ping_id, latitude, longitude, timestamp **Optional fields**: heading, speed)
   2. **data_quality_parameters**: Dictionary with the following fields["max speed", "max speed time", "minimum_pings", "minimum_coverage"]. Maximum speed allowed for vehicle (km/h), time permited above the allowed time (seconds), minimum number of pings, and minimum coverage of the pings in km (diagonal of the bounding box)
 
 

@@ -22,4 +22,3 @@ def test_trip(gps_trace):
     assert trp.has_speed
     print(trp.trace.dist.max())
     print(trp.trace.traveled_time.max())
-

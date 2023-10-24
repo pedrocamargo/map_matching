@@ -35,7 +35,7 @@ class MapMatcher:
     def load_network(self, graph: Graph, links: gpd.GeoDataFrame, nodes: Optional[gpd.GeoDataFrame] = None):
         self.network = Network(graph=graph, links=links, nodes=nodes)
 
-    def load_gps_traces(self, gps_traces: Union[gpd.GeoDataFrame, PathLike]):
+    def load_gps_traces(self, gps_traces: Union[gpd.GeoDataFrame, PathLike], crs: Optional[int] = None):
         f"""Coordinate system for GPS pings must ALWAYS be 4326 when loading from CSV.
         Required fields are:  {self.__mandatory_fields}"""
 
@@ -45,14 +45,15 @@ class MapMatcher:
         else:
             traces = pd.read_csv(gps_traces)
             traces = gpd.GeoDataFrame(
-                traces, geometry=gpd.points_from_xy(traces.longitude, traces.latitude), crs="EPSG:4326"
+                traces, geometry=gpd.points_from_xy(traces.longitude, traces.latitude), crs=f"EPSG:{crs}"
             )
 
         for fld in self.__mandatory_fields:
             if fld not in traces:
                 raise ValueError(f"Field {fld} is mising from the data")
 
-        self.__traces = traces.to_crs(3857).sort_values(by=["trace_id", "timestamp"])
+        self.__traces = traces.to_crs(self.parameters.geoprocessing.projected_crs)
+        self.__traces.sort_values(by=["trace_id", "timestamp"], inplace=True)
 
     def load_stops(self, stops: Union[gpd.GeoDataFrame, PathLike]):
         if isinstance(stops, pd.GeoDataFrame):
@@ -83,25 +84,25 @@ class MapMatcher:
         return azim - 180 if azim > 180 else azim + 180
 
     @staticmethod
-    def check_if_inside(azimuth, polygon_azimuth, tolerance):
+    def check_if_inside(heading, polygon_heading, tolerance):
         # If checking the tolerance interval will make the angle bleed the [0,360] interval, we have to fix it
 
         # In case the angle is too big
-        if polygon_azimuth + tolerance > 360:
-            if polygon_azimuth - tolerance > azimuth:
-                azimuth += 360
+        if polygon_heading + tolerance > 360:
+            if polygon_heading - tolerance > heading:
+                heading += 360
 
         # In case the angle is too small
-        if polygon_azimuth - tolerance < 0:
-            polygon_azimuth += 360
-            if azimuth < 180:
-                azimuth += 360
+        if polygon_heading - tolerance < 0:
+            polygon_heading += 360
+            if heading < 180:
+                heading += 360
 
-        if polygon_azimuth - tolerance <= azimuth <= polygon_azimuth + tolerance:
+        if polygon_heading - tolerance <= heading <= polygon_heading + tolerance:
             return True
 
-        # Several data points do NOT have an azimuth associated, so we consider the possibility that all the links are valid
-        if azimuth == 0:
+        # Several data points do NOT have an heading associated, so we consider the possibility that all the links are valid
+        if heading == 0:
             return True
 
         return False

@@ -1,4 +1,4 @@
-ping_id,x,y,trace_id,timestamp,speed,azimuth
+ping_id,x,y,trace_id,timestamp,speed,heading
 1,-94.453295,33.4722903,1,2/1/2016 9:32,65,45
 2,-94.4491401,33.4741443,1,2/1/2016 9:32,65,45
 3,-94.4090592,33.4733794,1,2/1/2016 9:34,3,180

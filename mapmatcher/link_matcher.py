@@ -10,7 +10,7 @@ from mapmatcher.trip import Trip
 
 def find_network_links(list_trips: List(Trip), parameters: Parameters, network: Network):
     veh_speed = -1
-    veh_azimuth = -1
+    veh_heading = -1
     poly = []
     poly_time = []  # An array of [link graph id, timestamp the link is possibly used by a ping]
     all_links = []
@@ -19,7 +19,7 @@ def find_network_links(list_trips: List(Trip), parameters: Parameters, network: 
         if trip.has_speed:
             veh_speed = trip.gps_trace.at[trip, "speed"]
         if trip.has_heading:
-            veh_azimuth = trip.gps_trace.at[trip, "azimuth"]
+            veh_heading = trip.gps_trace.at[trip, "heading"]
 
         y = trip.gps_trace.at[trip, "latitude"]
         x = trip.gps_trace.at[trip, "longitude"]
@@ -43,13 +43,13 @@ def find_network_links(list_trips: List(Trip), parameters: Parameters, network: 
                     if direc < 0:
                         azim = self.reverse_azim(azim)
 
-                    if self.check_if_inside(veh_azimuth, azim, network.azimuth_tolerance):
+                    if self.check_if_inside(veh_heading, azim, network.heading_tolerance):
                         poly.append(graph_id)
                         poly_time.append([graph_id, timestamp])
                         all_links.append(int(j))
                     if direc == 0:
                         azim = self.reverse_azim(azim)
-                        if self.check_if_inside(veh_azimuth, azim, network.azimuth_tolerance):
+                        if self.check_if_inside(veh_heading, azim, network.heading_tolerance):
                             poly.append(network.links_df.graph_ba[j])
                             poly_time.append([network.links_df.graph_ba[j], timestamp])
                 else:

@@ -23,7 +23,7 @@ class Network:
         self.links = links
         self.nodes = nodes
         self.graph = graph
-        self.azimuth_tolerance = None
+        self.heading_tolerance = None
         self.buffers = {}
         self.links_df = None
         self.network_fields = None
@@ -33,7 +33,7 @@ class Network:
 
         # Fields necessary for running the algorithm
         self.mandatory_fields = ["trip_id", "ping_id", "latitude", "longitude", "timestamp"]
-        self.optional_fields = ["azimuth", "speed"]
+        self.optional_fields = ["heading", "speed"]
         self.all_fields = self.mandatory_fields + self.optional_fields
 
         # Indicators to show if we have the optional fields in the data
@@ -41,5 +41,6 @@ class Network:
         self.has_heading = False
 
         pgeo = parameters.geoprocessing
-        buffers = self.links.to_crs(3857).buffer(distance=pgeo.buffer_size, resolution=pgeo.buffer_resolution)
+        crs = pgeo.projected_crs
+        buffers = self.links.to_crs(crs).buffer(distance=pgeo.buffer_size, resolution=pgeo.buffer_resolution)
         self.buffers = buffers.to_crs(4326)

@@ -22,7 +22,7 @@ df = pd.read_csv("example_data/ATRI-LIKE-SAMPLE.csv")
 df.readdate = pd.to_datetime(df.readdate)
 
 # Data source specific
-field_dict = {"latitude": "y", "longitude": "x", "timestamp": "readdate", "azimuth": "heading", "ping_id": "PingID"}
+field_dict = {"latitude": "y", "longitude": "x", "timestamp": "readdate", "heading": "heading", "ping_id": "PingID"}
 
 trips.populate_with_dataframe(df, field_dict)
 
