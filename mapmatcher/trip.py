@@ -12,7 +12,8 @@ from .parameters import Parameters
 
 
 class Trip:
-    def __init__(self, gps_trace: gpd.GeoDataFrame, parameters: Parameters, network:Network, stops=gpd.GeoDataFrame([])):
+    def __init__(
+        self, gps_trace: gpd.GeoDataFrame, parameters: Parameters, network: Network, stops=gpd.GeoDataFrame([])):
         # Fields necessary for running the algorithm
 
         self.__coverage = -1.1
@@ -20,7 +21,7 @@ class Trip:
         self.id = -1
 
         self.parameters = parameters
-        self.stops = stops
+        self.stops = stops.to_crs(parameters.geoprocessing.projected_crs)
         self._stop_nodes = []
         self.network = network
         self._error_type = "Data not loaded yet"
@@ -50,7 +51,7 @@ class Trip:
     @property
     def has_error(self) -> bool:
         return len(self._error_type) > 0
-    
+
     def __pre_process(self):
         dqp = self.parameters.data_quality
 
@@ -122,19 +123,19 @@ class Trip:
             # TODO: Add capability of computing stops
             pass
 
-        self._stop_nodes = self.stop.sjoin_nearest(self.network.nodes, distance_col="ping_dist").node_id.tolist()
-        
+        self._stop_nodes = self.stops.sjoin_nearest(self.network.nodes, distance_col="ping_dist").node_id.tolist()
+
     def __network_links(self):
-        cand = self.network.links.sjoin_nearest(trace = self.trace, 
-                                                distance_col="ping_dist", 
-                                                max_distance=self.parameters.map_matching.buffer_size)
+        cand = self.network.links.sjoin_nearest(
+            trace=self.trace, distance_col="ping_dist", max_distance=self.parameters.map_matching.buffer_size
+        )
 
         if self.network.has_speed:
             cand = cand[cand[self.network._speed_field] <= cand.trace_segment_speed]
 
         if not self.has_heading:
             self.__links_used = cand.link_id.tolist()
-            return 
+            return
 
         # TODO: Add consideration of heading
         # TODO: Add heuristic to give bigger discounts for dasd
