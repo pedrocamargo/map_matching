@@ -13,7 +13,8 @@ from .parameters import Parameters
 
 class Trip:
     def __init__(
-        self, gps_trace: gpd.GeoDataFrame, parameters: Parameters, network: Network, stops=gpd.GeoDataFrame([])):
+        self, gps_trace: gpd.GeoDataFrame, parameters: Parameters, network: Network, stops=gpd.GeoDataFrame([])
+    ):
         # Fields necessary for running the algorithm
 
         self.__coverage = -1.1
@@ -127,7 +128,7 @@ class Trip:
 
     def __network_links(self):
         cand = self.network.links.sjoin_nearest(
-            trace=self.trace, distance_col="ping_dist", max_distance=self.parameters.map_matching.buffer_size
+            self.trace, distance_col="ping_dist", max_distance=self.parameters.map_matching.buffer_size
         )
 
         if self.network.has_speed:
@@ -140,3 +141,4 @@ class Trip:
         # TODO: Add consideration of heading
         # TODO: Add heuristic to give bigger discounts for dasd
         self.__links_used = cand.link_id.tolist()
+        return
