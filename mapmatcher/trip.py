@@ -28,7 +28,7 @@ class Trip:
         self.stops = stops.to_crs(parameters.geoprocessing.projected_crs)
         self._stop_nodes = []
         self.__geo_path = LineString([])
-        self.__mm_results = pd.DataFrame([], columns=["links", "direction", "mileposts"])
+        self.__mm_results = pd.DataFrame([], columns=["links", "direction", "milepost"])
         self.network = network
         self._error_type = "Data not loaded yet"
 
@@ -62,7 +62,7 @@ class Trip:
                 mileposts.extend(res.milepost[1:] + position)
                 position += res.milepost[-1]
 
-        self.__mm_results = pd.DataFrame({"links": links, "direction": directions, "mileposts": mileposts})
+        self.__mm_results = pd.DataFrame({"links": links, "direction": directions, "milepost": mileposts})
 
     @property
     def path_shape(self) -> LineString:
