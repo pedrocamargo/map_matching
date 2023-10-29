@@ -7,8 +7,9 @@ import numpy as np
 import pandas as pd
 from aequilibrae.paths.results import PathResults
 from shapely.geometry import LineString
-from mapmatcher.network import Network
 from shapely.ops import linemerge
+
+from mapmatcher.network import Network
 
 from .parameters import Parameters
 
@@ -20,13 +21,14 @@ class Trip:
         # Fields necessary for running the algorithm
 
         self.__coverage = -1.1
-        self.__links_used = np.array([])
+        self.__candidate_links = np.array([])
         self.id = -1
 
         self.parameters = parameters
         self.stops = stops.to_crs(parameters.geoprocessing.projected_crs)
         self._stop_nodes = []
         self.__geo_path = LineString([])
+        self.__mm_results = pd.DataFrame([], columns=["links", "direction", "mileposts"])
         self.network = network
         self._error_type = "Data not loaded yet"
 
@@ -50,25 +52,36 @@ class Trip:
 
         links = []
         directions = []
+        mileposts = []
+        position = 0
         for stop1, stop2 in zip(self._stop_nodes[:-1], self._stop_nodes[1:]):
             res.compute_path(stop1, stop2)
             if res.path.shape[0]:
                 links.extend(res.path)
                 directions.extend(res.path_link_directions)
+                mileposts.extend(res.milepost[1:] + position)
+                position += res.milepost[-1]
 
-        self.__links_used = np.array(links)
-        self.__link_directions_used = np.array(directions)
+        self.__mm_results = pd.DataFrame({"links": links, "direction": directions, "mileposts": mileposts})
 
     @property
     def path_shape(self) -> LineString:
         if not self.__geo_path.length:
-            links = self.network.links.loc[self.__links_used, :]
+            links = self.network.links.loc[self.__mm_results.links.to_numpy(), :]
             geo_data = []
-            for (link_id, rec), direction in zip(links.iterrows(), self.__link_directions_used):
+            for (link_id, rec), direction in zip(links.iterrows(), self.__mm_results.direction.to_numpy()):
                 geo = rec.geometry if direction > 0 else LineString(rec.geometry.coords[::-1])
                 geo_data.append(geo)
             self.__geo_path = linemerge(geo_data)
         return self.__geo_path
+
+    @property
+    def result(self):
+        links = self.network.links.loc[self.__mm_results.links.to_numpy(), :]
+        # return links
+        return gpd.GeoDataFrame(self.__mm_results, geometry=links.geometry.values, crs=links.crs).to_crs(
+            self.network._orig_crs
+        )
 
     @property
     def coverage(self) -> float:
@@ -83,9 +96,9 @@ class Trip:
 
     @property
     def candidate_links(self) -> np.ndarray:
-        if self.__links_used.shape[0] > 0:
+        if self.__candidate_links.shape[0] > 0:
             self.__network_links()
-        return self.__links_used
+        return self.__candidate_links
 
     def __pre_process(self):
         dqp = self.parameters.data_quality
@@ -161,6 +174,8 @@ class Trip:
         self._stop_nodes = self.stops.sjoin_nearest(self.network.nodes, distance_col="ping_dist").node_id.tolist()
 
     def __network_links(self):
+        if self.__candidate_links.shape[0]:
+            return
         cand = self.network.links.sjoin_nearest(
             self.trace, distance_col="ping_dist", max_distance=self.parameters.map_matching.buffer_size
         )
@@ -169,9 +184,9 @@ class Trip:
             cand = cand[cand[self.network._speed_field] <= cand.trace_segment_speed]
 
         if not self.has_heading:
-            self.__links_used = cand.link_id.to_numpy()
+            self.__candidate_links = cand.link_id.to_numpy()
             return
 
         # TODO: Add consideration of heading
         # TODO: Add heuristic to give bigger discounts for dasd
-        self.__links_used = cand.link_id.to_numpy()
+        self.__candidate_links = cand.link_id.to_numpy()

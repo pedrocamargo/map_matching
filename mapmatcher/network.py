@@ -1,5 +1,5 @@
-import numpy as np
 import geopandas as gpd
+import numpy as np
 from aequilibrae import Graph
 
 from mapmatcher.parameters import Parameters
@@ -13,6 +13,7 @@ class Network:
         self.graph = graph
         self._speed_field = ""
         self._pars = parameters
+        self._orig_crs = 4326
 
     @property
     def has_speed(self) -> bool:
@@ -24,7 +25,7 @@ class Network:
         self._speed_field = speed_field
 
     def discount_graph(self, links: np.ndarray):
-        self.graph.graph["distance"][self.graph.graph.link_id.isin(links)] *= self._pars.map_matching.cost_discount
+        self.graph.graph.loc[self.graph.graph.link_id.isin(links), "distance"] *= self._pars.map_matching.cost_discount
         self.graph.set_graph("distance")
 
     def reset_graph(self):

@@ -54,6 +54,7 @@ class MapMatcher:
 
         self.__traces = traces.to_crs(self.parameters.geoprocessing.projected_crs)
         self.__traces.sort_values(by=["trace_id", "timestamp"], inplace=True)
+        self.network.__orig_crs = self._orig_crs
 
     def load_stops(self, stops: Union[gpd.GeoDataFrame, PathLike]):
         if isinstance(stops, pd.GeoDataFrame):
@@ -72,9 +73,5 @@ class MapMatcher:
             self.trips.append(Trip(self.parameters, gps_trace=gdf, stops=stops))
 
     def execute(self):
-        self.find_stops()
-        if self.trip.stops is not None:
-            self.find_network_links()
-            self.find_route()
-        else:
-            raise ValueError("No trip stops to compute paths from")
+        for trip in self.trips:  # type: Trip
+            trip.map_match()
