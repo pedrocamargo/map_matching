@@ -1,3 +1,4 @@
+import numpy as np
 import geopandas as gpd
 from aequilibrae import Graph
 
@@ -5,12 +6,13 @@ from mapmatcher.parameters import Parameters
 
 
 class Network:
-    def __init__(self, graph: Graph, links: gpd.GeoDataFrame, nodes: gpd.GeoDataFrame):
+    def __init__(self, graph: Graph, links: gpd.GeoDataFrame, nodes: gpd.GeoDataFrame, parameters: Parameters):
         # Creates the properties for the outputs
-        self.links = links
+        self.links = links.set_index("link_id", drop=True)
         self.nodes = nodes
         self.graph = graph
         self._speed_field = ""
+        self._pars = parameters
 
     @property
     def has_speed(self) -> bool:
@@ -20,3 +22,11 @@ class Network:
         if speed_field not in self.links:
             raise ValueError("Speed field NOT in the links table")
         self._speed_field = speed_field
+
+    def discount_graph(self, links: np.ndarray):
+        self.graph.graph["distance"][self.graph.graph.link_id.isin(links)] *= self._pars.map_matching.cost_discount
+        self.graph.set_graph("distance")
+
+    def reset_graph(self):
+        self.graph.prepare_graph(self.graph.centroids)
+        self.graph.set_graph("distance")

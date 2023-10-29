@@ -5,8 +5,10 @@ from typing import Optional
 import geopandas as gpd
 import numpy as np
 import pandas as pd
-
+from aequilibrae.paths.results import PathResults
+from shapely.geometry import LineString
 from mapmatcher.network import Network
+from shapely.ops import linemerge
 
 from .parameters import Parameters
 
@@ -18,12 +20,13 @@ class Trip:
         # Fields necessary for running the algorithm
 
         self.__coverage = -1.1
-        self.__links_used = []
+        self.__links_used = np.array([])
         self.id = -1
 
         self.parameters = parameters
         self.stops = stops.to_crs(parameters.geoprocessing.projected_crs)
         self._stop_nodes = []
+        self.__geo_path = LineString([])
         self.network = network
         self._error_type = "Data not loaded yet"
 
@@ -40,7 +43,32 @@ class Trip:
                 logging.critical(f"Cannot map-match due to : {self._error_type}. You can also ignore errors")
         self.__compute_stops()
 
-        pass
+        self.network.reset_graph()
+        self.network.discount_graph(self.candidate_links)
+        res = PathResults()
+        res.prepare(self.network.graph)
+
+        links = []
+        directions = []
+        for stop1, stop2 in zip(self._stop_nodes[:-1], self._stop_nodes[1:]):
+            res.compute_path(stop1, stop2)
+            if res.path.shape[0]:
+                links.extend(res.path)
+                directions.extend(res.path_link_directions)
+
+        self.__links_used = np.array(links)
+        self.__link_directions_used = np.array(directions)
+
+    @property
+    def path_shape(self) -> LineString:
+        if not self.__geo_path.length:
+            links = self.network.links.loc[self.__links_used, :]
+            geo_data = []
+            for (link_id, rec), direction in zip(links.iterrows(), self.__link_directions_used):
+                geo = rec.geometry if direction > 0 else LineString(rec.geometry.coords[::-1])
+                geo_data.append(geo)
+            self.__geo_path = linemerge(geo_data)
+        return self.__geo_path
 
     @property
     def coverage(self) -> float:
@@ -52,6 +80,12 @@ class Trip:
     @property
     def has_error(self) -> bool:
         return len(self._error_type) > 0
+
+    @property
+    def candidate_links(self) -> np.ndarray:
+        if self.__links_used.shape[0] > 0:
+            self.__network_links()
+        return self.__links_used
 
     def __pre_process(self):
         dqp = self.parameters.data_quality
@@ -135,10 +169,9 @@ class Trip:
             cand = cand[cand[self.network._speed_field] <= cand.trace_segment_speed]
 
         if not self.has_heading:
-            self.__links_used = cand.link_id.tolist()
+            self.__links_used = cand.link_id.to_numpy()
             return
 
         # TODO: Add consideration of heading
         # TODO: Add heuristic to give bigger discounts for dasd
-        self.__links_used = cand.link_id.tolist()
-        return
+        self.__links_used = cand.link_id.to_numpy()
