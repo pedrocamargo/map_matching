@@ -33,7 +33,7 @@ class MapMatcher:
         self.parameters.stop_algorithm = stop_algorithm
 
     def load_network(self, graph: Graph, links: gpd.GeoDataFrame, nodes: Optional[gpd.GeoDataFrame] = None):
-        self.network = Network(graph=graph, links=links, nodes=nodes)
+        self.network = Network(graph=graph, links=links, nodes=nodes, parameters=self.parameters)
 
     def load_gps_traces(self, gps_traces: Union[gpd.GeoDataFrame, PathLike], crs: Optional[int] = None):
         f"""Coordinate system for GPS pings must ALWAYS be 4326 when loading from CSV.

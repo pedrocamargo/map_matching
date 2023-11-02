@@ -8,8 +8,8 @@ from mapmatcher.parameters import Parameters
 class Network:
     def __init__(self, graph: Graph, links: gpd.GeoDataFrame, nodes: gpd.GeoDataFrame, parameters: Parameters):
         # Creates the properties for the outputs
-        self.links = links.set_index("link_id", drop=True)
-        self.nodes = nodes
+        self.links = links if links.index.name == "link_id" else links.set_index("link_id", drop=True)
+        self.nodes = nodes if nodes.index.name == "node_id" else nodes.set_index("node_id", drop=True)
         self.graph = graph
         self._speed_field = ""
         self._pars = parameters
