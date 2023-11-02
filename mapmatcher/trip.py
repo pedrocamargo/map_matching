@@ -25,7 +25,9 @@ class Trip:
         self.id = -1
 
         self.parameters = parameters
-        self.stops = stops.to_crs(parameters.geoprocessing.projected_crs)
+        self.stops = stops
+        if self.stops.shape[0]:
+            self.stops.to_crs(parameters.geoprocessing.projected_crs, inplace=True)
         self._stop_nodes = []
         self.__geo_path = LineString([])
         self.__mm_results = pd.DataFrame([], columns=["links", "direction", "milepost"])

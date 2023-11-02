@@ -4,8 +4,8 @@ from typing import List, Optional, Union
 import geopandas as gpd
 import pandas as pd
 from aequilibrae.paths import Graph
-from network import Network
-from trip import Trip
+from .network import Network
+from .trip import Trip
 
 from .parameters import Parameters
 
@@ -15,7 +15,7 @@ class MapMatcher:
 
     def __init__(self):
         self.__orig_crs = 4326
-        self.network: Network()
+        self.network: Network() = None
         self.trips: List[Trip] = []
         self.output_folder = None
         self.__exogeous_stops = False
@@ -39,8 +39,8 @@ class MapMatcher:
         f"""Coordinate system for GPS pings must ALWAYS be 4326 when loading from CSV.
         Required fields are:  {self.__mandatory_fields}"""
 
-        if isinstance(gps_traces, pd.GeoDataFrame):
-            self.__orig_crs = traces.crs
+        if isinstance(gps_traces, gpd.GeoDataFrame):
+            self.__orig_crs = gps_traces.crs
             traces = gps_traces
         else:
             traces = pd.read_csv(gps_traces)
@@ -54,10 +54,9 @@ class MapMatcher:
 
         self.__traces = traces.to_crs(self.parameters.geoprocessing.projected_crs)
         self.__traces.sort_values(by=["trace_id", "timestamp"], inplace=True)
-        self.network.__orig_crs = self._orig_crs
 
     def load_stops(self, stops: Union[gpd.GeoDataFrame, PathLike]):
-        if isinstance(stops, pd.GeoDataFrame):
+        if isinstance(stops, gpd.GeoDataFrame):
             self.__stops = stops.to_crs(4326)
         else:
             stops = pd.read_csv(stops)
@@ -73,5 +72,6 @@ class MapMatcher:
             self.trips.append(Trip(self.parameters, gps_trace=gdf, stops=stops))
 
     def execute(self):
+        self.network._orig_crs = self.__orig_crs
         for trip in self.trips:  # type: Trip
             trip.map_match()
