@@ -167,14 +167,16 @@ class Trip:
         if len(self._stop_nodes):
             return
 
-        if self.stops.shape[0]:
+        if not self.stops.shape[0]:
             if self.parameters.stop_algorithm == "maximum_space":
                 algo_parameters = self.parameters.algorithm_parameters[self.parameters.stop_algorithm]
                 self.stops = stops_maximum_space(self.trace, algo_parameters)
             else:
                 raise NotImplementedError("Not implemented yet")
 
-        self._stop_nodes = self.stops.sjoin_nearest(self.network.nodes, distance_col="ping_dist").node_id.tolist()
+        self._stop_nodes = self.stops.sjoin_nearest(
+            self.network.nodes.reset_index(), distance_col="ping_dist"
+        ).node_id.tolist()
 
     def __network_links(self):
         if self.__candidate_links.shape[0]:

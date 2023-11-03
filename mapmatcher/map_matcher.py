@@ -4,10 +4,10 @@ from typing import List, Optional, Union
 import geopandas as gpd
 import pandas as pd
 from aequilibrae.paths import Graph
-from .network import Network
-from .trip import Trip
 
+from .network import Network
 from .parameters import Parameters
+from .trip import Trip
 
 
 class MapMatcher:
