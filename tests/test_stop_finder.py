@@ -40,7 +40,6 @@ def test_compute_stop():
     assert stops.shape[0] == 2
 
     # And reduce the travel time
-
     algo_parameters.max_avg_time = ceil((trp.trace.ping_posix_time.max() - trp.trace.ping_posix_time.min()) - 5)
     stops = stops_maximum_space(trp.trace, algo_parameters)
     assert stops.shape[0] == 3
