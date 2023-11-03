@@ -25,16 +25,15 @@ class map_matching:
 
 
 @dataclasses.dataclass
-class maximum_space:  # Time in seconds
-    max_time: float = 10800
-    min_distance: float = 5000  # Distance in m. Measured as Great circle distance between each consecutive ping
-    max_distance: float = 20000  # Distance in m. Measured as Great circle distance between each consecutive ping
+class MaximumSpace:  # Time in seconds
+    max_avg_time: float = 10800
+    max_avg_distance: float = 5000  # Distance in m. Measured as Great circle distance between each consecutive ping
 
 
 # This is the algorithm commonly used for ATRI truck GPS data. Initially developed by Pinjari et. Al and improved by
 # Camargo, Hong and Livshits (2017)
 @dataclasses.dataclass
-class delivery_stop:  # Time in seconds
+class DeliveryStop:  # Time in seconds
     stopped_speed: float = 2.22  # in m/s
     min_time_stopped: float = 300  # 5*60 in seconds   --> minimum stopped time to be considered
     max_time_stopped: float = 14400  # 4*60*60 in seconds   --> maximum stopped time to be considered
@@ -46,7 +45,7 @@ class Parameters:
     geoprocessing = geoprocessing()
     data_quality = data_quality()
     stop_algorithm = "delivery_stop"
-    algorithm_parameters = {"delivery_stop": delivery_stop(), "maximum_space": maximum_space(), "exogenous": None}
+    algorithm_parameters = {"delivery_stop": DeliveryStop(), "maximum_space": MaximumSpace(), "exogenous": None}
     map_matching = map_matching()
 
 

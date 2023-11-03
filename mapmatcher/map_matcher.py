@@ -53,7 +53,6 @@ class MapMatcher:
                 raise ValueError(f"Field {fld} is mising from the data")
 
         self.__traces = traces.to_crs(self.parameters.geoprocessing.projected_crs)
-        self.__traces.sort_values(by=["trace_id", "timestamp"], inplace=True)
 
     def load_stops(self, stops: Union[gpd.GeoDataFrame, PathLike]):
         if isinstance(stops, gpd.GeoDataFrame):
@@ -68,6 +67,7 @@ class MapMatcher:
     def _build_trips(self):
         self.trips.clear()
         for trace_id, gdf in self.__traces.groupby(["trace_id"]):
+            gdf = gdf.sort_values(by=["timestamp"]).reset_index()
             stops = None if self.__exogeous_stops else self.__stops[self.__stops.trace_id == trace_id]
             self.trips.append(Trip(self.parameters, gps_trace=gdf, stops=stops))
 

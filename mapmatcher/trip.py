@@ -12,6 +12,7 @@ from shapely.ops import linemerge
 from mapmatcher.network import Network
 
 from .parameters import Parameters
+from .stop_finder import stops_maximum_space
 
 
 class Trip:
@@ -104,6 +105,7 @@ class Trip:
 
     def __pre_process(self):
         dqp = self.parameters.data_quality
+        self._error_type = ""
 
         if "trace_id" not in self.trace:
             self._error_type = "Trace does not have field trace_id"
@@ -118,18 +120,16 @@ class Trip:
         # Check number of pings
         if self.trace.shape[0] < dqp.minimum_pings:
             self._error_type = f"Vehicle with only {self.trace.shape[0]} pings. Minimum is {dqp.minimum_pings}"
-            return
 
         if self.coverage < dqp.minimum_coverage:
-            self._error_type = f"Vehicle covers only {self.coverage:,.2} m. Minimum is {dqp.minimum_coverage}"
-            return
+            self._error_type += f"  Vehicle covers only {self.coverage:,.2} m. Minimum is {dqp.minimum_coverage}"
 
         # removes pings on the same spot
         self.trace["ping_posix_time"] = (self.trace.timestamp - pd.Timestamp("1970-01-01")) // pd.Timedelta("1s")
 
         diff_pings = self.trace.shape[0] - len(self.trace.ping_posix_time.unique())
         if diff_pings:
-            logging.warning(f"There are {diff_pings:,} with the same timestamp")
+            logging.warning(f"There are {diff_pings:,} pings with the same timestamp")
 
             df = pd.DataFrame(
                 {"ping_posix_time": self.trace.ping_posix_time, "x": self.trace.geometry.x, "y": self.trace.geometry.y}
@@ -137,7 +137,7 @@ class Trip:
             agg = df.groupby(["ping_posix_time"]).agg(["min", "max", "count"])
             jitter = np.sqrt((agg.x["min"] - agg.x["max"]) ** 2 + (agg.y["min"] - agg.y["max"]) ** 2)
             if np.max(jitter) > (dqp.maximum_jittery):
-                self._error_type = f"Data is jittery. Same timestamp {np.max(jitter):,.2} m apart."
+                self._error_type += f"  Data is jittery. Same timestamp {np.max(jitter):,.2} m apart."
                 return
 
             self.trace.drop_duplicates(subset=["ping_posix_time"], inplace=True, keep="first")
@@ -160,18 +160,16 @@ class Trip:
                 "trace_segment_traveled_time"
             ].cumsum()
             if too_fast.max() > dqp.max_speed_time:
-                self._error_type = f"Max speed surpassed for {w} seconds"
+                self._error_type += f"  Max speed surpassed for {w} seconds"
                 return
-
-        self._error_type = ""
 
     def __compute_stops(self):
         if len(self._stop_nodes):
             return
 
         if self.stops.shape[0]:
-            # TODO: Add capability of computing stops
-            pass
+            algo_parameters = self.parameters.algorithm_parameters[self.parameters.stop_algorithm]
+            self.stops = stops_maximum_space(self.trace, algo_parameters)
 
         self._stop_nodes = self.stops.sjoin_nearest(self.network.nodes, distance_col="ping_dist").node_id.tolist()
 
