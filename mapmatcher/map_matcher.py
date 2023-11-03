@@ -1,8 +1,11 @@
 from os import PathLike
+import logging
 from typing import List, Optional, Union
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
+from aequilibrae import Project
 from aequilibrae.paths import Graph
 
 from .network import Network
@@ -18,10 +21,25 @@ class MapMatcher:
         self.network: Network() = None
         self.trips: List[Trip] = []
         self.output_folder = None
-        self.__exogeous_stops = False
+        self.__usr_stops = False
         self.__traces: gpd.GeoDataFrame
         self.__stops: Optional[gpd.GeoDataFrame] = None
         self.parameters = Parameters()
+
+    @staticmethod
+    def from_aequilibrae(proj: Project, mode: str):
+        proj.network.build_graphs(modes=[mode])
+        graph = proj.network.graphs[mode]
+        graph.prepare_graph(np.array([1]))
+        graph.set_graph("distance")
+        link_sql = "SELECT link_id, Hex(ST_AsBinary(geometry)) as geometry FROM links;"
+        nodes_sql = "SELECT node_id, Hex(ST_AsBinary(geometry)) as geometry FROM nodes;"
+        links = gpd.GeoDataFrame.from_postgis(link_sql, proj.conn, geom_col="geometry", crs=4326)
+        nodes = gpd.GeoDataFrame.from_postgis(nodes_sql, proj.conn, geom_col="geometry", crs=4326)
+
+        mmatcher = MapMatcher()
+        mmatcher.load_network(graph=graph, links=links, nodes=nodes)
+        return mmatcher
 
     def set_output_folder(self, output_folder: str):
         # Name of the output folder
@@ -62,16 +80,21 @@ class MapMatcher:
             self.__stops = gpd.GeoDataFrame(
                 stops, geometry=gpd.points_from_xy(stops.longitude, stops.latitude), crs="EPSG:4326"
             )
-        self.__exogeous_stops = True
+        self.__usr_stops = True
 
     def _build_trips(self):
         self.trips.clear()
         for trace_id, gdf in self.__traces.groupby(["trace_id"]):
             gdf = gdf.sort_values(by=["timestamp"]).reset_index()
-            stops = None if self.__exogeous_stops else self.__stops[self.__stops.trace_id == trace_id]
-            self.trips.append(Trip(self.parameters, gps_trace=gdf, stops=stops))
+            stops = gpd.GeoDataFrame([]) if not self.__usr_stops else self.__stops[self.__stops.trace_id == trace_id]
+            self.trips.append(Trip(gps_trace=gdf, stops=stops, parameters=self.parameters, network=self.network))
 
     def execute(self):
+        self._build_trips()
         self.network._orig_crs = self.__orig_crs
+        success = 0
         for trip in self.trips:  # type: Trip
             trip.map_match()
+            success += trip.success
+        logging.critical(f"Succeeded:{success:,}")
+        logging.critical(f"Failed:{len(self.trips) - success:,}")

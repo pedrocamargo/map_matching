@@ -17,19 +17,25 @@ from .stop_finder import stops_maximum_space
 
 class Trip:
     def __init__(
-        self, gps_trace: gpd.GeoDataFrame, parameters: Parameters, network: Network, stops=gpd.GeoDataFrame([])
+        self,
+        gps_trace: gpd.GeoDataFrame,
+        parameters: Parameters,
+        network: Network,
+        stops: Optional[gpd.GeoDataFrame] = None,
     ):
         # Fields necessary for running the algorithm
 
         self.__coverage = -1.1
         self.__candidate_links = np.array([])
+        self.__map_matched = 0
         self.id = -1
 
         self.parameters = parameters
-        self.stops = stops
+        self.stops = gpd.GeoDataFrame([]) if stops is None else stops
         if self.stops.shape[0]:
             self.stops.to_crs(parameters.geoprocessing.projected_crs, inplace=True)
         self._stop_nodes = []
+        self.warnings = []
         self.__geo_path = LineString([])
         self.__mm_results = pd.DataFrame([], columns=["links", "direction", "milepost"])
         self.network = network
@@ -45,7 +51,12 @@ class Trip:
     def map_match(self, ignore_errors=False):
         if self.has_error:
             if not ignore_errors:
-                logging.critical(f"Cannot map-match due to : {self._error_type}. You can also ignore errors")
+                logging.warning(
+                    f"Cannot map-match trace id {self.id} due to : {self._error_type}. You can also try to ignore errors"
+                )
+                return
+        if self.id == 26:
+            print(1)
         self.compute_stops()
 
         self.network.reset_graph()
@@ -59,13 +70,18 @@ class Trip:
         position = 0
         for stop1, stop2 in zip(self._stop_nodes[:-1], self._stop_nodes[1:]):
             res.compute_path(stop1, stop2)
-            if res.path.shape[0]:
+            if res.path is not None:
                 links.extend(res.path)
                 directions.extend(res.path_link_directions)
                 mileposts.extend(res.milepost[1:] + position)
                 position += res.milepost[-1]
 
         self.__mm_results = pd.DataFrame({"links": links, "direction": directions, "milepost": mileposts})
+        self.__map_matched = 1
+
+    @property
+    def success(self):
+        return self.__map_matched
 
     @property
     def path_shape(self) -> LineString:
@@ -129,7 +145,7 @@ class Trip:
 
         diff_pings = self.trace.shape[0] - len(self.trace.ping_posix_time.unique())
         if diff_pings:
-            logging.warning(f"There are {diff_pings:,} pings with the same timestamp")
+            self.warnings.append(f"There are {diff_pings:,} pings with the same timestamp")
 
             df = pd.DataFrame(
                 {"ping_posix_time": self.trace.ping_posix_time, "x": self.trace.geometry.x, "y": self.trace.geometry.y}
@@ -142,6 +158,8 @@ class Trip:
 
             self.trace.drop_duplicates(subset=["ping_posix_time"], inplace=True, keep="first")
 
+            if self.trace.shape[0] < dqp.minimum_pings:
+                self._error_type += f"   Vehicle with only {self.trace.shape[0]} pings. Minimum is {dqp.minimum_pings}"
         # Create data quality fields
         dist = self.trace.distance(self.trace.shift(1))
         ttime = (self.trace["timestamp"] - self.trace["timestamp"].shift(1)).dt.seconds.astype(float)

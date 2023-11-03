@@ -20,7 +20,7 @@ def stops_maximum_space(trace: gpd.GeoDataFrame, parameters: MaximumSpace):
     b = interval_finder - interval_finder.shift(1).fillna(0)
 
     stop_indices = [
-        floor(np.mean([np.arange(a.shape[0])[a > 0], np.arange(b.shape[0])[b > 0]])) for i in range(intervals - 1)
+        floor(np.mean([np.arange(a.shape[0])[a > 0][i], np.arange(b.shape[0])[b > 0][i]])) for i in range(intervals - 1)
     ]
     ping_indices = [a.index.values[i] for i in stop_indices]
     ping_indices.extend([trace.index.values[0], trace.index.values[-1]])
