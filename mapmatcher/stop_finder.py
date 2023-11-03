@@ -23,13 +23,11 @@ def stops_maximum_space(trace: gpd.GeoDataFrame, parameters: MaximumSpace):
         floor(np.mean([np.arange(a.shape[0])[a > 0], np.arange(b.shape[0])[b > 0]])) for i in range(intervals - 1)
     ]
     ping_indices = [a.index.values[i] for i in stop_indices]
-    ping_indices.extend([trace.index[0], trace.index[1]])
+    ping_indices.extend([trace.index.values[0], trace.index.values[-1]])
     ping_indices = list(set(ping_indices))
 
-    stops = trace.loc[ping_indices, :].sort_values(by=["timestamp"]).assign(stop_index=np.arange(len(ping_indices) + 1))
-    stops = gpd.GeoDataFrame(stops["stop_index", "timestamp"], geometry=stops.geometry, crs=stops.crs)
-
-    return stops
+    stops = trace.loc[ping_indices, :].sort_values(by=["timestamp"]).assign(stop_index=np.arange(len(ping_indices)) + 1)
+    return gpd.GeoDataFrame(stops[["stop_index", "timestamp"]], geometry=stops.geometry, crs=stops.crs)
 
 
 def delivery_stop(self):

@@ -44,7 +44,7 @@ class DeliveryStop:  # Time in seconds
 class Parameters:
     geoprocessing = geoprocessing()
     data_quality = data_quality()
-    stop_algorithm = "delivery_stop"
+    stop_algorithm = "maximum_space"
     algorithm_parameters = {"delivery_stop": DeliveryStop(), "maximum_space": MaximumSpace(), "exogenous": None}
     map_matching = map_matching()
 

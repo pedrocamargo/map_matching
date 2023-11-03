@@ -46,7 +46,7 @@ class Trip:
         if self.has_error:
             if not ignore_errors:
                 logging.critical(f"Cannot map-match due to : {self._error_type}. You can also ignore errors")
-        self.__compute_stops()
+        self.compute_stops()
 
         self.network.reset_graph()
         self.network.discount_graph(self.candidate_links)
@@ -163,13 +163,16 @@ class Trip:
                 self._error_type += f"  Max speed surpassed for {w} seconds"
                 return
 
-    def __compute_stops(self):
+    def compute_stops(self):
         if len(self._stop_nodes):
             return
 
         if self.stops.shape[0]:
-            algo_parameters = self.parameters.algorithm_parameters[self.parameters.stop_algorithm]
-            self.stops = stops_maximum_space(self.trace, algo_parameters)
+            if self.parameters.stop_algorithm == "maximum_space":
+                algo_parameters = self.parameters.algorithm_parameters[self.parameters.stop_algorithm]
+                self.stops = stops_maximum_space(self.trace, algo_parameters)
+            else:
+                raise NotImplementedError("Not implemented yet")
 
         self._stop_nodes = self.stops.sjoin_nearest(self.network.nodes, distance_col="ping_dist").node_id.tolist()
 
