@@ -1,10 +1,11 @@
 from pathlib import Path
+from math import ceil
 
 import geopandas as gpd
 import pandas as pd
 import pytest
 
-from mapmatcher.parameters import Parameters
+from mapmatcher.parameters import MaximumSpace, Parameters
 from mapmatcher.stop_finder import stops_maximum_space
 from mapmatcher.trip import Trip
 
@@ -19,7 +20,7 @@ def test_compute_stop():
     trace = gpd.GeoDataFrame(df, geometry=geometry)
 
     par = Parameters()
-    algo_parameters = par.algorithm_parameters["maximum_space"]
+    algo_parameters = par.algorithm_parameters["maximum_space"]  # type: MaximumSpace
     trp = Trip(gps_trace=trace, parameters=par, network=None)
 
     stops = stops_maximum_space(trp.trace, algo_parameters)
@@ -32,3 +33,14 @@ def test_compute_stop():
 
     for x, y in zip(stops.timestamp[:-1], stops.timestamp[1:]):
         abs(x - y).seconds < algo_parameters.max_avg_time
+
+    # Let's explode te average distance
+    algo_parameters.max_avg_distance = 500000
+    stops = stops_maximum_space(trp.trace, algo_parameters)
+    assert stops.shape[0] == 2
+
+    # And reduce the travel time
+
+    algo_parameters.max_avg_time = ceil((trp.trace.ping_posix_time.max() - trp.trace.ping_posix_time.min()) - 5)
+    stops = stops_maximum_space(trp.trace, algo_parameters)
+    assert stops.shape[0] == 3
