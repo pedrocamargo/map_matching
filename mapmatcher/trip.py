@@ -116,7 +116,7 @@ class Trip:
 
     @property
     def candidate_links(self) -> np.ndarray:
-        if self.__candidate_links.shape[0] > 0:
+        if self.__candidate_links.shape[0] == 0:
             self.__network_links()
         return self.__candidate_links
 
@@ -200,7 +200,7 @@ class Trip:
             return
         cand = self.network.links.sjoin_nearest(
             self.trace, distance_col="ping_dist", max_distance=self.parameters.map_matching.buffer_size
-        )
+        ).reset_index()
 
         if self.network.has_speed:
             cand = cand[cand[self.network._speed_field] <= cand.trace_segment_speed]
