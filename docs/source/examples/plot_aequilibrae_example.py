@@ -24,7 +24,7 @@ nauru_gps.head()
 # %%
 # Since it does not, let's fix it
 nauru_gps.rename(
-    columns={"x": "longitude", "y": "latitude", "gps_fix_id": "ping_id", "vehicle_unique_id": "trace_id"}, inplace=True
+    columns={"x": "longitude", "y": "latitude", "vehicle_unique_id": "trace_id"}, inplace=True
 )
 
 # %%

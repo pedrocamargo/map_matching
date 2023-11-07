@@ -14,7 +14,7 @@ from .trip import Trip
 
 
 class MapMatcher:
-    __mandatory_fields = ["trace_id", "ping_id", "latitude", "longitude", "timestamp"]
+    __mandatory_fields = ["trace_id", "latitude", "longitude", "timestamp"]
 
     def __init__(self):
         self.__orig_crs = 4326
@@ -68,7 +68,7 @@ class MapMatcher:
 
         for fld in self.__mandatory_fields:
             if fld not in traces:
-                raise ValueError(f"Field {fld} is mising from the data")
+                raise ValueError(f"Field {fld} is missing from the data")
 
         self.__traces = traces.to_crs(self.parameters.geoprocessing.projected_crs)
 
@@ -85,7 +85,6 @@ class MapMatcher:
     def _build_trips(self):
         self.trips.clear()
         for trace_id, gdf in self.__traces.groupby(["trace_id"]):
-            gdf = gdf.sort_values(by=["timestamp"]).reset_index()
             stops = gpd.GeoDataFrame([]) if not self.__usr_stops else self.__stops[self.__stops.trace_id == trace_id]
             self.trips.append(Trip(gps_trace=gdf, stops=stops, parameters=self.parameters, network=self.network))
 

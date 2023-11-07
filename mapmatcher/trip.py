@@ -10,18 +10,17 @@ from shapely.geometry import LineString
 from shapely.ops import linemerge
 
 from mapmatcher.network import Network
-
 from .parameters import Parameters
 from .stop_finder import stops_maximum_space
 
 
 class Trip:
     def __init__(
-        self,
-        gps_trace: gpd.GeoDataFrame,
-        parameters: Parameters,
-        network: Network,
-        stops: Optional[gpd.GeoDataFrame] = None,
+            self,
+            gps_trace: gpd.GeoDataFrame,
+            parameters: Parameters,
+            network: Network,
+            stops: Optional[gpd.GeoDataFrame] = None,
     ):
         # Fields necessary for running the algorithm
 
@@ -59,6 +58,8 @@ class Trip:
             print(1)
         self.compute_stops()
 
+        # TODO: reset_graph takes a LOT of time because of the rebuilding of the graph. We need to hack the change of
+        #       the cost field to avoid this insanity
         self.network.reset_graph()
         self.network.discount_graph(self.candidate_links)
         res = PathResults()
@@ -124,15 +125,15 @@ class Trip:
         self._error_type = ""
 
         if "trace_id" not in self.trace:
-            self._error_type = "Trace does not have field trace_id"
-            return
+            raise ValueError("Trace does not have field trace_id")
 
         if len(self.trace.trace_id.unique()) > 1:
-            self._error_type = "trace_id is not unique"
-            return
+            raise ValueError("trace_id is not unique")
 
         self.id = self.trace.trace_id.values[0]
 
+        self.trace.sort_values(by=["timestamp"], inplace=True)
+        self.trace.reset_index(drop=True, inplace=True)
         # Check number of pings
         if self.trace.shape[0] < dqp.minimum_pings:
             self._error_type = f"Vehicle with only {self.trace.shape[0]} pings. Minimum is {dqp.minimum_pings}"
@@ -154,7 +155,6 @@ class Trip:
             jitter = np.sqrt((agg.x["min"] - agg.x["max"]) ** 2 + (agg.y["min"] - agg.y["max"]) ** 2)
             if np.max(jitter) > (dqp.maximum_jittery):
                 self._error_type += f"  Data is jittery. Same timestamp {np.max(jitter):,.2} m apart."
-                return
 
             self.trace.drop_duplicates(subset=["ping_posix_time"], inplace=True, keep="first")
 
@@ -179,7 +179,6 @@ class Trip:
             ].cumsum()
             if too_fast.max() > dqp.max_speed_time:
                 self._error_type += f"  Max speed surpassed for {w} seconds"
-                return
 
     def compute_stops(self):
         if len(self._stop_nodes):

@@ -1,6 +1,7 @@
 # Map Matching
 Map matching / route reconstruction algorithm
 
+
 If you use this code, please reference it in the following way:
 Camargo, P., Hong, S., Livshits, V., 'Expanding the Uses of Truck GPS Data in Freight Modeling and Planning Activities', Transportation Research Record, In Press
 
@@ -35,8 +36,7 @@ I only implemented a method to import data from CSV. However, it is easy to add 
 
 
 ##### The data is expected to have the following fields:
- 
-* **ping_id** (integer or long): Identifier for the ping ID (needs to be unique within a same vehicle)
+* **trace_id** (int):  
 * **latitude** (float): latitude
 * **longitude** (float): longitude
 * **timestamp** (data-time format): timestamp for the data file
