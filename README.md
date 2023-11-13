@@ -1,31 +1,24 @@
 # Map Matching
 Map matching / route reconstruction algorithm
 
+
 If you use this code, please reference it in the following way:
-Camargo, P., Hong, S., Livshits., 'Expanding the Uses of Truck GPS Data in Freight Modeling and Planning Activities', Transportation Research Record, In Press
+Camargo, P., Hong, S., Livshits, V., 'Expanding the Uses of Truck GPS Data in Freight Modeling and Planning Activities', Transportation Research Record, In Press
 
 ## Dependencies
 The code depends on a number of specialized libraries
 
-* PyYaml
 ##### Data frames and array computation
 * Pandas
-* NumPY
+* NumPy
 
 ##### Geographic operations
-* geopy
-* rtree
-* shapefile
-* fiona
 * shapely
+* geopandas
 
 ##### Path Computation
 * AequilibraE
 
-Since AequilibraE is not yet an established library, binaries for Windows 32 and 64 bits, MAC and Linux are provided.
-The source code for the relevant portions of AequilibraE at the time of compilation is also included in this project
-For further references, https://github.com/AequilibraE/AequilibraE
- 
 
 ## Overview
 
@@ -43,27 +36,27 @@ I only implemented a method to import data from CSV. However, it is easy to add 
 
 
 ##### The data is expected to have the following fields:
- 
-* **ping_id** (integer or long): Identifier for the ping ID (needs to be unique within a same vehicle)
+* **trace_id** (int):  
 * **latitude** (float): latitude
 * **longitude** (float): longitude
 * **timestamp** (data-time format): timestamp for the data file
 
 
 ##### The optional fields that can be also used in the algorithm are:
-* **azimuth** (float): Direction (degrees [0,359]) the vehicle was heading when ping was registered
+* **heading** (float): Direction (degrees [0,359]) the vehicle was heading when ping was registered
 * **speed** (float): Speed the vehicle was travelling at when ping happened
 
 ##### Parallelization
 
 Map-matching (for cold data) is an embarassingly parallel problem. However, no advanced parallelization was implemented so far. Contributions on this issue are welcome
+However, the path computation part of the algorithm DOES release the GIL, so threading might be worth pursuing
 
 # Using the code
 
 ## 1. The Trip class
   A trip is the path a vehicle did that needs to be map-matched.
   It has the following properties:
-  1. **GPS trace**: The input data (**Mandatory fields**: trip_id, ping_id, latitude, longitude, timestamp **Optional fields**: azimuth, speed)
+  1. **GPS trace**: The input data (**Mandatory fields**: trip_id, ping_id, latitude, longitude, timestamp **Optional fields**: heading, speed)
   2. **data_quality_parameters**: Dictionary with the following fields["max speed", "max speed time", "minimum_pings", "minimum_coverage"]. Maximum speed allowed for vehicle (km/h), time permited above the allowed time (seconds), minimum number of pings, and minimum coverage of the pings in km (diagonal of the bounding box)
 
 
